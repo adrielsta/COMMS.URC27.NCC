@@ -7,11 +7,12 @@
   <meta name="theme-color" content="#101313">
   <title>NCC · Communications control</title>
   <link rel="stylesheet" href="/styles.css">
+  <script src="/geoview.js" defer></script>
   <script src="/app.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to mission controls</a>
-  <div class="simulation-banner"><span class="simulation-dot"></span><strong>SIMULATION</strong><span>Software test environment · Synthetic vehicles and geography</span></div>
+  <div class="simulation-banner"><span class="simulation-dot"></span><strong>SIMULATION</strong><span>Simulated vehicles · Real historical satellite imagery</span></div>
   <header class="site-header">
     <a class="brand" href="/" aria-label="NCC communications control home"><span class="brand-mark" aria-hidden="true">N</span><span>NCC<span class="brand-caption">COMMUNICATIONS / URC 2027</span></span></a>
     <div class="header-right"><span class="environment-label">LOCAL OPERATIONS</span><span id="connection-state" class="connection-state unavailable"><span class="status-dot"></span><span id="connection-label">Connecting</span></span></div>
@@ -19,7 +20,7 @@
 
   <main id="main">
     <div class="page-heading">
-      <div><p class="eyebrow">FIELD OPERATIONS <span>/</span> COMMAND &amp; CONTROL</p><h1>Mission control<span class="heading-dot">.</span></h1><p class="page-description">Two vehicles. One verified picture of the field.</p></div>
+      <div><p class="eyebrow">FIELD OPERATIONS <span>/</span> COMMAND &amp; CONTROL</p><h1>Mission control<span class="heading-dot">.</span></h1><p class="page-description">Two simulated vehicles. Real terrain beneath them.</p></div>
       <div class="heading-actions"><button id="stop-rover" class="button stop-button" type="button"><span class="stop-symbol" aria-hidden="true"></span><span>STOP ROVER<small>Software command</small></span></button><p class="stop-note">Hardware E-stop is independent.</p></div>
     </div>
 
@@ -35,24 +36,21 @@
 
     <div class="workspace-grid">
       <section class="panel map-panel" aria-labelledby="field-view-title">
-        <div class="panel-heading"><div><p class="eyebrow">SITUATIONAL AWARENESS</p><h2 id="field-view-title">Field view</h2></div><span class="tag">SYNTHETIC</span></div>
+        <div class="panel-heading"><div><p class="eyebrow">SITUATIONAL AWARENESS</p><h2 id="field-view-title">Satellite field view</h2></div><span class="tag">OFFLINE IMAGERY</span></div>
+        <div class="map-toolbar"><span id="imagery-location">Loading stored satellite imagery</span><div class="map-controls" role="group" aria-label="Field map controls"><button id="map-zoom-out" type="button" aria-label="Zoom field map out" disabled>−</button><button id="map-zoom-in" type="button" aria-label="Zoom field map in" disabled>+</button><button id="map-reset" type="button" disabled>Reset view</button></div></div>
         <div class="map-view">
-          <svg id="field-map" viewBox="0 0 800 390" role="img" aria-labelledby="map-title map-description">
-            <title id="map-title">Synthetic local vehicle position diagram</title>
-            <desc id="map-description">Shows the simulated rover, its recent reported positions, and a reviewed package when available. This is not a geographic basemap or a verified navigation route.</desc>
-            <defs><pattern id="grid-small" width="25" height="25" patternUnits="userSpaceOnUse"><path d="M 25 0 L 0 0 0 25" fill="none" stroke="#2a3330" stroke-width="0.6"/></pattern><pattern id="grid-large" width="100" height="100" patternUnits="userSpaceOnUse"><rect width="100" height="100" fill="url(#grid-small)"/><path d="M 100 0 L 0 0 0 100" fill="none" stroke="#3b4740" stroke-width="0.8"/></pattern></defs>
-            <rect width="800" height="390" fill="#151e1b"/><rect width="800" height="390" fill="url(#grid-large)"/>
-            <path d="M0 285 Q110 300 175 215 T345 190 T500 130 T800 85" class="map-terrain"/><path d="M0 315 Q105 325 190 245 T360 220 T515 160 T800 115" class="map-terrain"/>
-            <g class="map-crosshairs" aria-hidden="true"><path d="M400 180v30M385 195h30"/></g>
-            <g id="reviewed-route"></g><polyline id="rover-trail" class="rover-trail" points=""/>
-            <g id="rover-marker" hidden><circle r="18" class="marker-halo"/><circle r="8" class="marker-core"/><path d="M-3 1L0-4L3 1" class="marker-arrow"/><text x="25" y="5" class="map-label">ROVER</text></g>
-            <g transform="translate(751 40)" aria-hidden="true"><path d="M0 8v25M-5 14L0 8L5 14" stroke="#bdc7bc" stroke-width="1.5" fill="none"/><text x="0" y="0" text-anchor="middle" class="north-label">N</text></g>
+          <svg id="field-map" role="img" tabindex="0" aria-labelledby="map-title map-description">
+            <title id="map-title">Historical satellite imagery with simulated vehicle positions</title>
+            <desc id="map-description">Locally stored satellite imagery projected in Web Mercator. WGS84 rover and drone positions and reviewed routes are overlaid at their geographic coordinates. Drag or use arrow keys to pan. Positions outside coverage are identified, never fitted onto the image.</desc>
           </svg>
-          <div id="map-empty" class="map-empty"><span class="map-empty-icon" aria-hidden="true">◎</span><span>Waiting for position telemetry</span></div>
-          <div class="map-coordinate"><span class="status-dot"></span><span id="map-position">LAT — · LON —</span></div>
-          <span class="map-watermark">LOCAL DIAGRAM / AUTO SCALE</span>
+          <div id="map-empty" class="map-empty" role="status"><span class="map-empty-icon" aria-hidden="true">◎</span><span id="map-load-status">Loading historical satellite imagery…</span></div>
+          <span class="map-watermark">HISTORICAL SATELLITE · NOT LIVE</span>
+          <span id="map-scale" class="map-scale"></span>
         </div>
-        <div class="map-footer"><span><i class="legend-dot rover-legend"></i>Rover</span><span><i class="legend-line"></i>Reported trail</span><span><i class="legend-line review-legend"></i>Reviewed package</span><span class="map-disclaimer">Not for navigation</span></div>
+        <div class="map-position-row"><span id="map-position">ROVER LAT — · LON —</span><span id="field-drone-position">DRONE LAT — · LON —</span></div>
+        <p id="map-status" class="map-status" role="status">Waiting for position telemetry.</p>
+        <div class="map-footer"><span><i class="legend-dot rover-legend"></i>Simulated rover</span><span><i class="legend-dot drone-legend"></i>Simulated drone</span><span><i class="legend-line"></i>Reported trail</span><span><i class="legend-line review-legend"></i>Reviewed route</span></div>
+        <div class="imagery-source"><p id="imagery-source">Source and acquisition period are loading.</p><p class="imagery-links"><a href="https://cloudless.eox.at/" target="_blank" rel="noopener noreferrer">EOxCloudless source</a><span aria-hidden="true"> · </span><a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0 license</a></p></div>
       </section>
 
       <section class="panel fleet-panel" aria-labelledby="fleet-title">
@@ -69,6 +67,25 @@
         </article>
       </section>
     </div>
+
+    <section class="panel drone-view-panel" aria-labelledby="drone-view-title">
+      <div class="panel-heading"><div><p class="eyebrow">SURVEY DRONE / OBSERVATION</p><h2 id="drone-view-title">Drone view</h2></div><span class="tag">SIMULATED TELEMETRY</span></div>
+      <div class="drone-view-grid">
+        <div class="drone-visual">
+          <div class="drone-view-tabs" role="tablist" aria-label="Drone view mode"><button id="drone-map-tab" type="button" role="tab" aria-controls="drone-map-panel" aria-selected="true">Position map</button><button id="drone-camera-tab" type="button" role="tab" aria-controls="drone-camera-panel" aria-selected="false" tabindex="-1">Camera</button></div>
+          <div id="drone-map-panel" role="tabpanel" aria-labelledby="drone-map-tab">
+            <div class="map-view drone-map-view">
+              <svg id="drone-map" role="img" aria-labelledby="drone-map-title drone-map-description"><title id="drone-map-title">Drone position on historical satellite imagery</title><desc id="drone-map-description">North-up overhead satellite map follows the last reported simulated drone position. This is not drone camera video, a drone survey, or a current observation.</desc></svg>
+              <div id="drone-map-empty" class="map-empty" role="status"><span id="drone-map-load-status">Loading stored satellite imagery…</span></div>
+              <span class="map-watermark">SATELLITE POSITION MAP · NOT CAMERA VIDEO</span><span id="drone-map-scale" class="map-scale"></span>
+            </div>
+            <p id="drone-map-status" class="map-status" role="status">Waiting for drone position telemetry.</p>
+          </div>
+          <div id="drone-camera-panel" class="drone-camera-panel" role="tabpanel" aria-labelledby="drone-camera-tab" hidden><svg class="camera-icon" viewBox="0 0 64 48" aria-hidden="true"><rect x="7" y="11" width="35" height="27" rx="4"/><path d="M42 20l15-8v28l-15-8M11 5l44 38"/></svg><h3>No camera connected</h3><p>A drone camera feed requires a physical camera and a local video adapter. No video is generated by this simulator.</p><span class="tag neutral">CAMERA OFFLINE</span></div>
+        </div>
+        <div class="drone-observation"><p class="eyebrow">REPORTED DRONE STATE</p><dl class="drone-view-details"><div><dt>Flight state</dt><dd id="drone-view-flight">—</dd></div><div><dt>Telemetry</dt><dd id="drone-view-freshness">Waiting for a report</dd></div><div><dt>Latitude / longitude · WGS84</dt><dd id="drone-view-position">—</dd></div><div><dt>View source</dt><dd id="drone-view-source">Stored historical satellite imagery</dd></div></dl><p class="help-text">The position map follows reported simulated coordinates. Drone motion and a camera feed are not implemented.</p><p class="help-text">Satellite imagery is stored with this application and uses no live satellite or internet feed. It is not a drone survey product or a verified navigation map.</p></div>
+      </div>
+    </section>
 
     <section class="panel operations-panel" aria-labelledby="operations-title">
       <div class="panel-heading"><div><p class="eyebrow">OPERATOR WORKSPACE</p><h2 id="operations-title">Mission operations</h2></div><span class="section-note">Vehicle telemetry confirms every change</span></div>

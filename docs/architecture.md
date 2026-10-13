@@ -20,6 +20,10 @@ All datagrams are serialized/deserialized through the vendored native MRDT codec
 
 Default ports are HTTP 8080, C2 UDP 12050, rover UDP 12051, drone UDP 12052. Every listener binds localhost. Only HTTP 8080 is configured for private Codespaces forwarding. HTTP accepts exact local or platform-derived forwarded Hosts, checks same-origin requests, requires a CSRF token and JSON content type for mutations, and limits body size and handler concurrency. Codespaces provides external user authentication; the local HTTP application does not replace it. Never make the forwarded port public.
 
+## Historical satellite views
+
+The browser's field map and separate drone position map use bundled, licensed 2016 Sentinel-2 tiles. `web/geoview.js` projects WGS 84 telemetry and reviewed routes onto their actual Web Mercator tile coordinates; it never fits a route to the image. Source metadata and tile SHA-256 hashes are verified offline by `scripts/fetch_imagery.py --verify`. C2 exposes only the manifest and constrained tile filenames, with same-origin image policy and no remote image proxy. Missing imagery leaves telemetry and command handling available. The camera tab is explicitly disconnected; the drone position map is historical satellite imagery, not camera video. See [imagery provenance](imagery-source.md).
+
 ## Command authority and reconnection
 
 Each vehicle issues random short-lived command-window tokens. It expires them using its own monotonic clock. C2 echoes a token alongside the vehicle boot identity, C2 session, command ID and sequence. No independent monotonic clocks are compared. Strict receiver sequencing prevents reordered motion commands; a fresh software STOP remains effective even when overtaken by a newer sequence.

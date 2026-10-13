@@ -6,7 +6,7 @@ The governing source is the supplied *University Rover Challenge 2027 — Requir
 
 ## Quick start: GitHub Codespaces
 
-1. Open this feature branch in a Codespace. The checked-in `.devcontainer` installs Python 3.12 and a C++ compiler, and builds the native codec. No Python or JavaScript package download is required.
+1. Open this feature branch in a Codespace. The checked-in `.devcontainer` installs Python 3.12, a C++ compiler, and Node.js for tests, and builds the native codec. No Python or JavaScript package download is required.
 2. Run:
 
    ```bash
@@ -22,15 +22,25 @@ The governing source is the supplied *University Rover Challenge 2027 — Requir
 
 `Ctrl-C` stops the supervisor and all three children. Runtime logs and the PID list are in ignored `.runtime/`. The supervisor restarts failed children with fresh process sessions and stops after repeated startup failures. Motion never resumes automatically after a vehicle or C2 process restart.
 
-The container image is pinned by version and verified digest. Local Docker validation is recorded in [test results](docs/test-results.md). This is not a claim that a hosted Codespace or GitHub Actions run has occurred.
+The container image is pinned by version and verified digest. Local Docker validation is recorded in [test results](docs/test-results.md); current remote checks are shown on the pull request. No hosted Codespace has been validated.
+
+**Using Windows PowerShell:** run these commands in the Codespace's Bash terminal, from the repository folder. They are Linux shell scripts. For a local Windows checkout, open WSL2 with `wsl` from PowerShell, change to your checkout folder, install the prerequisites below, and run `./scripts/start.sh` there.
 
 ## Offline laptop development
 
-On Linux or WSL2, install Python **3.12+**, `g++` with C++20 support, Bash, and `sha256sum` before going offline. With the checkout and compiler available, both commands above work with **no internet connection**. There is no hosted map dependency or runtime package installation. The dashboard is served on local port 8080; the included map is a synthetic coordinate diagram.
+On Linux or WSL2, install Python **3.12+**, `g++` with C++20 support, Bash, and `sha256sum` before going offline. Verification also requires **Node.js 18+**, included in the devcontainer. With these prerequisites and the checkout available, both commands above work with **no internet connection**. There is no hosted map dependency or runtime package installation. The dashboard is served on local port 8080 and includes bundled historical satellite imagery.
 
 An already built devcontainer image can also be used offline. The original image build and OS package installation require internet access. Native binaries must be rebuilt for the target machine/architecture. macOS, Windows-native, ARM targets, actual radios, and vehicle computers have not been validated.
 
 Field operation must be off-grid: no cloud or satellite internet may be required (rules §2.a.i and §2.c.i). This implementation supplies the offline development path and portable application protocol. Physical vehicle deployment requires the adapters and authenticated radio transport described in [hardware gaps](docs/hardware-gaps.md); the current simulator command sockets deliberately accept only localhost traffic.
+
+## Satellite field view and drone view
+
+The field map uses real **2016 Sentinel-2 imagery around MDRS, Utah**, stored locally with its attribution and license. Rover/drone markers and reviewed routes use their WGS 84 coordinates on a Web Mercator map. Drag or use arrow keys to pan, use the zoom buttons, and select **Reset view** to return. Positions outside the stored area are identified; stale positions remain visibly marked.
+
+The separate **Drone view** follows the drone's reported position on the same satellite map. Its **Camera** tab reports that no camera is connected. Vehicle positions and survey products remain simulated; no video or physical drone adapter is connected.
+
+The imagery has nominal 10 m source sampling and a 2016 mosaic date, so it provides historical geographic context rather than current obstacle or landing-site detail. No satellite internet or live satellite feed is used. URC §1.e.xiii encourages satellite imagery; §2.c.i prohibits satellite internet. See [imagery source, coverage and offline verification](docs/imagery-source.md) for the exact bounds, source, CC BY 4.0 license, and pinned tile hashes.
 
 ## Reproducible demonstrations
 

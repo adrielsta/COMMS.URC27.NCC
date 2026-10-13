@@ -1,6 +1,6 @@
 # Working on COMMS.URC27.NCC
 
-This is a simulation communications system, not a physical vehicle controller. All current data products and modes must remain visibly labelled as simulation. Read `docs/requirements-matrix.md`, `docs/protocol.md`, and `docs/hardware-gaps.md` before changing safety or mission logic.
+This is a simulation communications system, not a physical vehicle controller. Vehicle-generated data products and modes must remain visibly labelled as simulation. Bundled real historical imagery must retain its source, year and license labels. Read `docs/requirements-matrix.md`, `docs/protocol.md`, and `docs/hardware-gaps.md` before changing safety or mission logic.
 
 ## Checkout and ownership
 
@@ -18,6 +18,7 @@ This is a simulation communications system, not a physical vehicle controller. A
 - `comms/link.py`: bounded priority scheduler and fault injection.
 - `comms/supervisor.py`: three independent process lifecycles, logs and restarts.
 - `web/`: dependency-free responsive dashboard, served only by C2.
+- `web/geoview.js`, `web/imagery/`: georeferenced historical satellite basemap and original licensed tiles; preserve attribution and pinned hashes. Vehicle overlays remain simulated.
 - `vendor/mrdt/`: preserved third-party files; do not edit vendored source or hashes to make a check pass.
 - `native/`, `comms/codec.py`: validate lengths and fields before entering upstream native codec.
 - `tests/`: standard-library unittest suites, including real subprocess/UDP/HTTP workflows.
@@ -30,7 +31,7 @@ From the repository root:
 ./scripts/verify.sh
 ```
 
-This verifies vendored hashes, builds the C++20 shared codec, and runs all Python tests. It needs Python 3.12+, g++, Bash and sha256sum; no pip/npm dependencies. Keep tests meaningful: message ordering/expiry, integrity, rule restrictions and observed process behavior matter more than implementation-mirroring assertions.
+This verifies vendored and imagery hashes, builds the C++20 shared codec, and runs Python and JavaScript geometry tests. It needs Python 3.12+, g++, Bash, sha256sum and Node.js 18+; no pip/npm dependencies. Keep tests meaningful: message ordering/expiry, integrity, geographic alignment, rule restrictions and observed process behavior matter more than implementation-mirroring assertions.
 
 Start: `./scripts/start.sh`. Smoke demo in another terminal: `python3 scripts/demo.py`. Inspect `.runtime/*.log` for failures. Runtime keys/logs/PIDs and compiled output are ignored; never commit them. Use an isolated `COMMS_RUNTIME_DIR` and free HTTP/UDP ports when testing alongside an existing instance.
 

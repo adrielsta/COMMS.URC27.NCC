@@ -20,6 +20,6 @@ jobs:
       - name: Install compiler
         run: |
           apt-get update -o APT::Update::Error-Mode=any
-          DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends g++
+          DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends g++ nodejs
       - name: Build native codec and run checks
         run: ./scripts/verify.sh

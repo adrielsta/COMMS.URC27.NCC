@@ -8,14 +8,15 @@ Verified on October 13, 2026. All tests exercise explicitly simulated vehicles; 
 ./scripts/verify.sh
 ```
 
-This checks vendored source hashes, rebuilds the actual MRDT C++ codec, and runs the complete standard-library unittest suite. The latest complete devcontainer run reported:
+This checks vendored source and all nine imagery tile hashes, rebuilds the actual MRDT C++ codec, and runs the complete Python unittest and Node.js geometry suites. The latest complete devcontainer run reported:
 
 ```text
-Ran 64 tests in 22.453s
+Ran 68 tests in 23.377s
 OK
+Node.js: 5 tests passed; 0 failed, skipped or cancelled
 ```
 
-All 64 executed and passed; no skips, expected failures, or disabled tests. The same final suite passed in the cloud workspace in 20.964 seconds. The pinned development image built successfully. The suite ran as non-root `vscode`, with `--network=none`, after copying source into a fresh disposable container and rebuilding the native codec using g++ 12. Local cloud workspace builds use Python 3.12.14 / g++ 14.2. Both use the same source and verifier. Only known upstream unused-local-variable compiler warnings were emitted; vendored code was not changed to suppress them.
+All 68 Python tests and five Node.js tests executed and passed; no skips, expected failures, or disabled tests. The same suite passed in the cloud workspace (Python: 21.737 seconds). The pinned development image built successfully. The suite ran as non-root `vscode`, with `--network=none`, after copying source into a fresh disposable container and rebuilding the native codec using g++ 12. Container geometry checks used Node.js 18.20.4. Local cloud workspace builds use Python 3.12.14 / g++ 14.2. Both use the same source and verifier. Only known upstream unused-local-variable compiler warnings were emitted; vendored code was not changed to suppress them.
 
 The final transfer regression suite was additionally repeated twice inside the offline container: two tests passed in 8.985 seconds, then two passed in 8.969 seconds. These runs verify the corrected priority-ordering case in which STOP overtakes bulk traffic. Control sequences remain strict; independent chunk/report handling no longer rejects valid uploads because essential control arrived first.
 
@@ -35,6 +36,7 @@ tar --exclude=__pycache__ -cf - comms native scripts tests vendor web |
 
 | Suite | Evidence |
 | --- | --- |
+| `test_imagery.py`, `test_geoview.cjs` | Original tile integrity/dimensions, offline bundle verification, constrained HTTP asset routes, known XYZ tile alignment, coordinate round trips, invalid/polar/outside-coverage handling, and invalid manifest rejection |
 | `test_codec.py` | Actual native MRDT pack/unpack, known wire bytes, network byte order, empty/max binary payloads, native buffer bounds, malformed/truncated/padded/wrong-field packets |
 | `test_vehicle.py` | HMAC tamper rejection, strict schema, local window/lease expiry, duplicate and reordered command handling, fresh STOP exception, boot/session retirement, stopped package mutations, drone landing/phase/flight locks, conservative assistance/route manual rejection, onboard completion and visited-route recovery |
 | `test_packages.py` | Out-of-order and interrupted chunk resume, idempotent duplicates, hash corruption rejection, immutable IDs, canonical JSON, CRS/units/coordinate limits, store bounds, distinct validation/activation |
@@ -52,10 +54,12 @@ Chromium with Playwright exercised the running dashboard against real local serv
 
 Desktop/laptop/tablet/phone layouts were inspected at widths 1440, 1024, 768, 390 and 320 px without horizontal overflow. Holding/repeating Enter did not generate repeated motion pulses. A focused browser check verified the official Q&A 21 guard: autonomous/recovery motion and stale state lock new review/import/transfer/activation while preserving read-only package inspection, STOP and recovery. Browser checks require an installed Chromium/Playwright setup and are not included in the dependency-free unit-test command. The same flows can be repeated with the README demonstration steps.
 
+The historical satellite update was checked at desktop (1440), laptop (1024), and phone (390) widths with no horizontal overflow, external runtime requests or JavaScript errors. All nine tiles appeared in both map views. Checks covered pan/zoom/reset, keyboard navigation and tabs, disconnected camera messaging, stale/outside-coverage positions, and missing imagery while telemetry remains usable. Imagery is nominal 10 m sampling from 2016; zooming does not create additional detail.
+
 ## External verification and remaining limits
 
 - GitHub API confirmed authenticated account `adrielsta`, target repository `adrielsta/COMMS.URC27.NCC`, and push permission. Commit identity was explicitly confirmed by the owner.
 - Official URC pages and the linked current PDF were retrieved; the official PDF SHA-256 exactly matches the attachment. Applicable Q&A was reviewed; see `rules-source.md` for exact URLs and source scope.
 - The checked-in Codespaces configuration was tested as a local Docker development container. No hosted Codespace was launched.
-- GitHub Actions configuration is included. Local results do not establish a remote Actions run; consult the PR checks for remote status.
+- GitHub Actions passed for the initial simulator commit. Consult the PR checks for the current branch revision; local results alone do not establish a remote run.
 - No radios, video, LiDAR, flight controllers, real rover autonomy, physical E-stops, field GNSS, FAA/FCC compliance or physical vehicle tests were performed. Synthetic coordinates and route completion are not safe terrain planning or competition mission completion.

@@ -486,134 +486,190 @@ main {
   white-space:nowrap;
 }
 
+.map-toolbar {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:0 20px 15px;
+}
+
+.map-toolbar>span {
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.5;
+}
+
+.map-controls {
+  display:flex;
+  flex-shrink:0;
+  gap:4px;
+}
+
+.map-controls button {
+  border:1px solid #4b554e;
+  background:#242b27;
+  border-radius:5px;
+  padding:5px 10px;
+  min-width:38px;
+  min-height:38px;
+  font-size:15px;
+}
+
+.map-controls button:last-child {
+  font-size:10px;
+}
+
+.map-controls button:hover:not(:disabled) {
+  background:#384238;
+}
+
 .map-view {
   position:relative;
-  min-height:260px;
-  background:#151e1b;
+  height:370px;
+  background:#111715;
   border-top:1px solid var(--border);
   border-bottom:1px solid var(--border);
   overflow:hidden;
-  display:flex;
-  align-items:center;
 }
 
 .map-view svg {
   display:block;
   width:100%;
   height:100%;
-  min-height:300px;
-  aspect-ratio:800/390;
 }
 
-.map-terrain {
-  stroke:#3a4b3b;
-  stroke-width:11;
-  opacity:.17;
-  fill:none;
+#field-map {
+  cursor:grab;
+  touch-action:none;
 }
 
-.map-crosshairs {
-  fill:none;
-  stroke:#819578;
-  opacity:.23;
+#field-map.dragging {
+  cursor:grabbing;
+}
+
+#field-map:focus-visible {
+  outline:2px solid var(--accent);
+  outline-offset:-3px;
+}
+
+.satellite-tiles {
+  pointer-events:none;
+}
+
+.vehicle-marker {
+  pointer-events:none;
 }
 
 .marker-halo {
   fill:#efb077;
-  opacity:.16;
+  opacity:.25;
   stroke:#ffbc7e;
   stroke-width:1;
 }
 
 .marker-core {
   fill:var(--accent);
-  stroke:#37271b;
+  stroke:#322312;
   stroke-width:2;
 }
 
-.marker-arrow {
-  stroke:#29241b;
-  stroke-width:1.5;
-  fill:none;
+.drone-halo {
+  fill:#bad8f0;
+  opacity:.16;
+}
+
+.drone-cross,.drone-rotor {
+  stroke:#d5efff;
+  stroke-width:2;
+}
+
+.drone-rotor {
+  fill:#285473;
+}
+
+.marker-stale {
+  opacity:.62;
+}
+
+.marker-stale .marker-halo,.marker-stale .drone-halo {
+  stroke:var(--yellow);
+  stroke-dasharray:3 3;
+  opacity:.8;
+  fill:transparent;
 }
 
 .map-label {
   font-size:10px;
-  fill:#f3d0ad;
+  fill:#ffdab6;
   font-family:ui-monospace,monospace;
-  letter-spacing:1px;
+  font-weight:600;
+  letter-spacing:.5px;
   paint-order:stroke;
-  stroke:#151e1b;
+  stroke:#131b16;
   stroke-width:3px;
+  stroke-linejoin:round;
 }
 
-.north-label {
-  fill:#bdc7bc;
-  font-size:10px;
-  font-family:ui-monospace,monospace;
+.drone-map-marker .map-label {
+  fill:#d5efff;
 }
 
 .rover-trail {
-  stroke:#f5a567;
+  stroke:#ffb974;
   stroke-width:2.5;
   fill:none;
-  opacity:.8;
+  opacity:.9;
   stroke-linecap:round;
   stroke-linejoin:round;
 }
 
 .review-route-line {
-  stroke:#a0bcb5;
+  stroke:#c9e7db;
   stroke-width:2;
   fill:none;
   stroke-dasharray:6 7;
-  opacity:.75;
 }
 
 .review-waypoint {
   fill:#151e1b;
-  stroke:#a0bcb5;
+  stroke:#c9e7db;
   stroke-width:1.5;
 }
 
 .review-waypoint-label {
-  fill:#adcbc3;
+  fill:#def3e6;
   font-size:9px;
   paint-order:stroke;
   stroke:#151e1b;
   stroke-width:3px;
 }
 
-.map-coordinate {
+.map-watermark,.map-scale {
   position:absolute;
-  bottom:17px;
-  left:20px;
+  pointer-events:none;
   background:#131916e8;
-  padding:8px 11px;
-  border:1px solid #3e493f;
-  border-radius:5px;
-  display:flex;
-  align-items:center;
-  gap:8px;
-  color:#c4d2be;
+  color:#e0e8d9;
   font-family:ui-monospace,monospace;
-  font-size:9px;
-}
-
-.map-coordinate .status-dot {
-  color:var(--accent);
-  width:5px;
-  height:5px;
-  flex-basis:5px;
+  font-size:8px;
+  padding:7px 9px;
+  border:1px solid #4a584a;
+  border-radius:4px;
 }
 
 .map-watermark {
-  position:absolute;
-  right:18px;
-  bottom:26px;
-  color:#8a9a88;
-  font-size:7px;
-  letter-spacing:1px;
+  left:12px;
+  top:12px;
+  letter-spacing:.4px;
+}
+
+.map-scale {
+  right:12px;
+  bottom:12px;
+}
+
+.map-scale:empty {
+  display:none;
 }
 
 .map-empty {
@@ -626,12 +682,13 @@ main {
   align-items:center;
   gap:10px;
   text-align:center;
-  font-size:11px;
-  color:#b9c5b6;
-  background:#151e1bd9;
-  padding:15px;
+  font-size:12px;
+  line-height:1.7;
+  color:#c6d3c0;
+  background:#151e1bf2;
+  padding:17px;
   border-radius:8px;
-  min-width:210px;
+  width:min(320px,85%);
 }
 
 .map-empty-icon {
@@ -640,10 +697,28 @@ main {
   font-weight:300;
 }
 
-.map-footer {
-  padding:17px 22px;
+.map-position-row {
   display:flex;
-  gap:20px;
+  gap:8px 22px;
+  flex-wrap:wrap;
+  padding:15px 20px 0;
+  font-family:ui-monospace,monospace;
+  font-size:9px;
+  line-height:1.5;
+  color:#d6dfd0;
+}
+
+.map-status {
+  padding:12px 20px 0;
+  font-size:10px;
+  line-height:1.65;
+  color:#d2cbb6;
+}
+
+.map-footer {
+  padding:15px 20px;
+  display:flex;
+  gap:12px 18px;
   align-items:center;
   font-size:8px;
   color:var(--muted);
@@ -668,6 +743,10 @@ main {
   background:var(--accent);
 }
 
+.drone-legend {
+  background:#c0e2f8;
+}
+
 .legend-line {
   width:14px;
   height:0;
@@ -676,13 +755,129 @@ main {
 }
 
 .review-legend {
-  border-color:#a0bcb5;
+  border-color:#c9e7db;
   border-top-style:dashed;
 }
 
-.map-disclaimer {
-  margin-left:auto;
-  color:#aebca6;
+.imagery-source {
+  padding:12px 20px 16px;
+  border-top:1px solid var(--border);
+  font-size:9px;
+  line-height:1.65;
+  color:var(--muted);
+}
+
+.imagery-links {
+  margin-top:6px;
+}
+
+.imagery-links a {
+  text-underline-offset:3px;
+}
+
+.drone-view-panel {
+  margin-bottom:24px;
+}
+
+.drone-view-grid {
+  display:grid;
+  grid-template-columns:minmax(0,1.6fr) minmax(290px,1fr);
+  border-top:1px solid var(--border);
+}
+
+.drone-visual {
+  min-width:0;
+  border-right:1px solid var(--border);
+}
+
+.drone-view-tabs {
+  display:flex;
+  gap:5px;
+  padding:10px 18px;
+  background:#151a18;
+}
+
+.drone-view-tabs button {
+  border:1px solid transparent;
+  border-radius:5px;
+  background:transparent;
+  color:var(--muted);
+  font-size:11px;
+  padding:9px 14px;
+}
+
+.drone-view-tabs button[aria-selected=true] {
+  background:#31382d;
+  color:#e9e9dc;
+  border-color:#56624a;
+}
+
+.drone-map-view {
+  height:290px;
+}
+
+.drone-visual .map-status {
+  min-height:52px;
+  padding-bottom:12px;
+}
+
+.drone-observation {
+  padding:24px;
+}
+
+.drone-view-details {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px 18px;
+  margin:20px 0 24px;
+}
+
+.drone-view-details>div:nth-child(n+3) {
+  grid-column:1/-1;
+}
+
+.drone-view-details dt {
+  font-size:9px;
+  color:var(--muted);
+  margin-bottom:7px;
+}
+
+.drone-view-details dd {
+  font-size:12px;
+  line-height:1.55;
+  overflow-wrap:anywhere;
+}
+
+#drone-view-position {
+  font-family:ui-monospace,monospace;
+  font-size:11px;
+}
+
+.drone-camera-panel {
+  min-height:342px;
+  padding:40px 24px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  gap:16px;
+  background:#111715;
+}
+
+.camera-icon {
+  width:54px;
+  height:44px;
+  stroke:#8c9a87;
+  fill:none;
+  stroke-width:1.5;
+}
+
+.drone-camera-panel p {
+  max-width:340px;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.7;
 }
 
 .fleet-panel {
@@ -1406,9 +1601,6 @@ details[open] .disclosure-arrow {
 }
 
 @media(min-width:1450px) {
-  .map-view svg {
-    min-height:336px;
-  }
   .vehicle-card {
     padding:18px;
   }
@@ -1479,9 +1671,6 @@ details[open] .disclosure-arrow {
   .route-start .button-row {
     margin-top:14px;
   }
-  .map-watermark {
-    display:none;
-  }
   .map-footer {
     padding:17px 18px;
     gap:12px;
@@ -1512,9 +1701,6 @@ details[open] .disclosure-arrow {
   .workspace-grid {
     grid-template-columns:1fr;
   }
-  .map-view svg {
-    max-height:400px;
-  }
   .fleet-panel {
     display:grid;
     grid-template-columns:1fr 1fr;
@@ -1537,9 +1723,6 @@ details[open] .disclosure-arrow {
   }
   .summary-strip strong {
     font-size:12px;
-  }
-  .map-watermark {
-    display:block;
   }
   .lower-grid {
     grid-template-columns:1.2fr 1fr;
@@ -1726,28 +1909,56 @@ details[open] .disclosure-arrow {
     font-size:7px;
   }
   .map-view {
-    min-height:235px;
+    height:300px;
   }
-  .map-view svg {
-    min-height:235px;
+  .map-toolbar {
+    align-items:flex-start;
+    flex-wrap:wrap;
+    padding:0 14px 12px;
   }
-  .map-coordinate {
+  .map-toolbar>span {
+    font-size:10px;
+  }
+  .map-controls {
+    margin-left:auto;
+  }
+  .map-controls button {
+    min-height:42px;
+    min-width:42px;
+  }
+  .map-watermark,.map-scale {
     font-size:7px;
-    left:12px;
-    bottom:13px;
-    padding:7px 8px;
+    padding:7px;
   }
-  .map-watermark {
-    display:none;
+  .map-position-row {
+    font-size:8px;
+    padding:14px 14px 0;
+  }
+  .map-status {
+    padding-left:14px;
+    padding-right:14px;
+  }
+  .imagery-source {
+    padding-left:14px;
+    padding-right:14px;
+  }
+  .drone-view-grid {
+    grid-template-columns:1fr;
+  }
+  .drone-visual {
+    border-right:0;
+  }
+  .drone-observation {
+    padding:20px 18px;
+    border-top:1px solid var(--border);
+  }
+  .drone-view-panel {
+    margin-bottom:18px;
   }
   .map-footer {
     font-size:7px;
     gap:10px;
     padding:14px;
-  }
-  .map-disclaimer {
-    width:100%;
-    margin:0;
   }
   .fleet-panel {
     display:block;

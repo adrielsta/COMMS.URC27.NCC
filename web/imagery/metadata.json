@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "name": "Sentinel-2 cloudless 2016 \u2014 MDRS area, Utah",
+  "source": "https://maps.eox.at/",
+  "source_product_url": "https://cloudless.eox.at/",
+  "year": 2016,
+  "description": "Real historical satellite imagery around the simulator coordinates near MDRS, Utah. This cloudless mosaic combines modified Copernicus Sentinel observations from 2016; exact acquisition dates per pixel are not provided. Terrain, routes and event layout may have changed. Vehicle positions are simulated.",
+  "attribution": "EOxCloudless by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016), CC BY 4.0.",
+  "license": {
+    "name": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+    "url": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "crs": "EPSG:3857",
+  "tile_matrix_set": "g",
+  "tile_size": 256,
+  "zoom": 15,
+  "tiles": [
+    {
+      "x": 6299,
+      "y": 12590,
+      "path": "/imagery/tile-15-6299-12590.jpg",
+      "source_url": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/15/12590/6299.jpg",
+      "sha256": "6629c0c23d5e0c3912b6636afda47218a310544cf6f4a8715a03175316eda839",
+      "bytes": 6925
+    },
+    {
+      "x": 6300,
+      "y": 12590,
+      "path": "/imagery/tile-15-6300-12590.jpg",
+      "source_url": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/15/12590/6300.jpg",
+      "sha256": "690003179f14d9df3cdc36f008e0bc3f508322d4838742e18051799271c5f067",
+      "bytes": 5751
+    },
+    {
+      "x": 6301,
+      "y": 12590,
+      "path": "/imagery/tile-15-6301-12590.jpg",
+      "source_url": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/15/12590/6301.jpg",
+      "sha256": "ba9ce2dd2fc65ff548c867d3fe6e574f5cf47202c468dea520c9df72a4628d56",
+      "bytes": 4871
+    },
+    {
+      "x": 6299,
+      "y": 12591,
+      "path": "/imagery/tile-15-6299-12591.jpg",
+      "source_url": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/15/12591/6299.jpg",
+      "sha256": "a8a988e41f0c88415c6be4dd912c5278b63c6353fc36233bc32e3b2593307cb6",
+      "bytes": 7836
+    },
+    {
+      "x": 6300,
+      "y": 12591,
+      "path": "/imagery/tile-15-6300-12591.jpg",
+      "source_url": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/15/12591/6300.jpg",
+      "sha256": "09854ef57a7f7d17111c2bacf3004247feaf02d26fc82d7daf336504d361e9dd",
+      "bytes": 6173
+    },
+    {
+      "x": 6301,
+      "y": 12591,
+      "path": "/imagery/tile-15-6301-12591.jpg",
+      "source_url": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/15/12591/6301.jpg",
+      "sha256": "338d1cddf56372b8f94b7792a0ae9775b93f7a7e994b89086e750816b514618e",
+      "bytes": 5198
+    },
+    {
+      "x": 6299,
+      "y": 12592,
+      "path": "/imagery/tile-15-6299-12592.jpg",
+      "source_url": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/15/12592/6299.jpg",
+      "sha256": "26cc9747d34803cd9fd7898a8fd5c4ccf3372e3bd4cc2d5a9191d1c0a4a624c4",
+      "bytes": 6783
+    },
+    {
+      "x": 6300,
+      "y": 12592,
+      "path": "/imagery/tile-15-6300-12592.jpg",
+      "source_url": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/15/12592/6300.jpg",
+      "sha256": "c238b0a68ef6b48dd2e1f34df6c8ba092c514de8f6ab100db619e47f4d4a318f",
+      "bytes": 5714
+    },
+    {
+      "x": 6301,
+      "y": 12592,
+      "path": "/imagery/tile-15-6301-12592.jpg",
+      "source_url": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/15/12592/6301.jpg",
+      "sha256": "246da53eec9669c5c657d26bedbddc42ca0292b90758d559f548c6f0f86e71bf",
+      "bytes": 5437
+    }
+  ],
+  "bounds": {
+    "west": -110.797119140625,
+    "south": 38.40194908237822,
+    "east": -110.76416015625,
+    "north": 38.42777351132903
+  },
+  "center": {
+    "lat": 38.418,
+    "lon": -110.777
+  },
+  "resolution_m": 10,
+  "resolution_note": "Nominal Sentinel-2 visible-band ground sample distance; the zoom-15 JPEG display grid oversamples the source and does not add detail.",
+  "imagery_kind": "historical-satellite-mosaic",
+  "layer": "s2cloudless_3857",
+  "retrieved_on": "2026-10-13",
+  "capabilities_url": "https://tiles.maps.eox.at/wmts/1.0.0/WMTSCapabilities.xml",
+  "capabilities_sha256": "a8fab71589757f0e861007173ea7598a569e4cf06b38bba2b2abb05eeeb0176f",
+  "modifications": "Original EOX JPEG tile bytes, unmodified; the application displays separate simulation overlays.",
+  "network_at_runtime": false
+}

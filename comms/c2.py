@@ -371,11 +371,23 @@ def make_handler(c2, port):
                 with c2.lock:
                     result = c2.snapshot()
                 return self.respond(200, result)
-            assets = {'/': ('index.html', 'text/html; charset=utf-8'), '/app.js': ('app.js', 'text/javascript; charset=utf-8'), '/styles.css': ('styles.css', 'text/css; charset=utf-8')}
+            assets = {'/': ('index.html', 'text/html; charset=utf-8'), '/app.js': ('app.js', 'text/javascript; charset=utf-8'),
+                      '/geoview.js': ('geoview.js', 'text/javascript; charset=utf-8'),
+                      '/styles.css': ('styles.css', 'text/css; charset=utf-8')}
             if self.path in assets:
                 name, mime = assets[self.path]
                 path = ROOT / 'web' / name
                 if path.is_file():
+                    return self.respond(200, path.read_bytes(), mime)
+            # Only the bundled historical map manifest and named tiles are
+            # public. This is not a filesystem browser or remote image proxy.
+            if self.path == '/imagery/metadata.json' or re.fullmatch(r'/imagery/tile-\d{1,2}-\d{1,8}-\d{1,8}\.(?:jpg|png)', self.path):
+                directory = (ROOT / 'web' / 'imagery').resolve()
+                path = directory / self.path.rsplit('/', 1)[-1]
+                if path.is_file() and path.resolve().parent == directory and path.stat().st_size <= 2 * 1024 * 1024:
+                    if self.path == '/imagery/metadata.json':
+                        return self.respond(200, json.loads(path.read_text()))
+                    mime = 'image/png' if path.suffix == '.png' else 'image/jpeg'
                     return self.respond(200, path.read_bytes(), mime)
             self.respond(404, {'error': 'Not found'})
         def do_POST(self):

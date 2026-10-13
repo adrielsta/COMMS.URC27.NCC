@@ -368,19 +368,28 @@
     text("transfer-reason", transfer.reason || (accepted ? "Accepted package is staged at the rover. Explicit activation is required." : "Transfer progress is separate from receiver acceptance."));
   }
 
-  function svgNode(tag, attrs) {
-    const node = document.createElementNS("http://www.w3.org/2000/svg", tag);
-    Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, String(value)));
-    return node;
-  }
+  const validPosition = GeoView.validPosition;
+  const fieldMap = new GeoView.OfflineMap($("field-map"), {
+    status: (value) => { text("map-status", value || "Read-only map · Drag or use arrow keys to pan. Vehicle positions are simulated."); },
+    scaleLabel: (value) => text("map-scale", value),
+  });
+  const droneMap = new GeoView.OfflineMap($("drone-map"), {
+    follow: "drone",
+    status: (value) => text("drone-map-status", value || "Following reported drone position · Historical overhead imagery, not camera video."),
+    scaleLabel: (value) => text("drone-map-scale", value),
+  });
+  let imagery = null;
 
-  function validPosition(pos) {
-    return pos && Number.isFinite(pos.lat) && Number.isFinite(pos.lon) && Math.abs(pos.lat) <= 90 && Math.abs(pos.lon) <= 180;
+  function coordinateLabel(position) {
+    return validPosition(position) ? `LAT ${position.lat.toFixed(6)} · LON ${position.lon.toFixed(6)}` : "LAT — · LON —";
   }
 
   function renderMap() {
-    const vehicle = state.data?.vehicles?.rover;
+    const vehicles = state.data?.vehicles || {};
+    const vehicle = vehicles.rover;
     const position = vehicle?.state?.position;
+    const drone = vehicles.drone;
+    const dronePosition = drone?.state?.position;
     if (vehicle?.boot_id && state.lastBootId !== vehicle.boot_id) {
       state.positions = [];
       state.lastPositionKey = null;
@@ -393,42 +402,88 @@
         state.positions = state.positions.slice(-120);
         state.lastPositionKey = key;
       }
-      text("map-position", `LAT ${position.lat.toFixed(6)} · LON ${position.lon.toFixed(6)}`);
-    } else text("map-position", "LAT — · LON —");
-    const waypoints = Array.isArray(state.reviewedPackage?.waypoints) ? state.reviewedPackage.waypoints.filter(validPosition).slice(0, 500) : [];
-    const all = [...state.positions, ...waypoints];
-    $("map-empty").hidden = all.length > 0;
-    $("rover-marker").toggleAttribute("hidden", !validPosition(position));
-    const routeGroup = $("reviewed-route");
-    routeGroup.replaceChildren();
-    if (!all.length) return;
-    const latitudes = all.map((p) => p.lat);
-    const longitudes = all.map((p) => p.lon);
-    const midLat = (Math.min(...latitudes) + Math.max(...latitudes)) / 2;
-    const midLon = (Math.min(...longitudes) + Math.max(...longitudes)) / 2;
-    const lonFactor = Math.max(0.05, Math.cos(midLat * Math.PI / 180));
-    const xSpan = Math.max((Math.max(...longitudes) - Math.min(...longitudes)) * lonFactor, 0.0003);
-    const ySpan = Math.max(Math.max(...latitudes) - Math.min(...latitudes), 0.00015);
-    const scale = Math.min(640 / xSpan, 235 / ySpan);
-    const project = (p) => [400 + (p.lon - midLon) * lonFactor * scale, 184 - (p.lat - midLat) * scale];
-    $("rover-trail").setAttribute("points", state.positions.map((p) => project(p).join(",")).join(" "));
-    if (validPosition(position)) {
-      const point = project(position);
-      $("rover-marker").setAttribute("transform", `translate(${point[0]} ${point[1]})`);
-      $("rover-marker").style.opacity = vehicleFresh(vehicle) ? "1" : ".4";
     }
-    if (waypoints.length) {
-      routeGroup.append(svgNode("polyline", { class: "review-route-line", points: waypoints.map((p) => project(p).join(",")).join(" ") }));
-      waypoints.forEach((waypoint, index) => {
-        const [x, y] = project(waypoint);
-        routeGroup.append(svgNode("circle", { class: "review-waypoint", cx: x, cy: y, r: 4 }));
-        if (waypoints.length <= 20) {
-          const label = svgNode("text", { class: "review-waypoint-label", x: x + 8, y: y - 8 });
-          label.textContent = String(index + 1).padStart(2, "0");
-          routeGroup.append(label);
-        }
-      });
+    text("map-position", `ROVER ${coordinateLabel(position)}`);
+    text("field-drone-position", `DRONE ${coordinateLabel(dronePosition)}`);
+    text("drone-view-position", coordinateLabel(dronePosition));
+    text("drone-view-flight", friendly(drone?.state?.flight_state));
+    const age = vehicleAge(drone);
+    text("drone-view-freshness", Number.isFinite(age)
+      ? `${vehicleFresh(drone) ? "Current report" : "STALE · last report"} · ${age.toFixed(1)} s ago` : "Waiting for a report");
+    const reviewed = state.reviewedPackage;
+    const geographicRoute = reviewed?.crs === "EPSG:4326" && reviewed?.units === "degrees";
+    const waypoints = geographicRoute && Array.isArray(reviewed.waypoints) ? reviewed.waypoints.slice(0, 500) : [];
+    const scene = {
+      rover: { position, fresh: vehicleFresh(vehicle) },
+      drone: { position: dronePosition, fresh: vehicleFresh(drone) },
+      trail: state.positions,
+      waypoints,
+      routeWarning: reviewed && !geographicRoute ? "Reviewed route is not WGS84 degrees; it cannot be placed on this map."
+        : waypoints.some((point) => !validPosition(point)) ? "Reviewed route contains invalid coordinates; those points are not plotted." : "",
+    };
+    fieldMap.update(scene);
+    droneMap.update({ drone: scene.drone });
+  }
+
+  async function loadImagery() {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    try {
+      const response = await fetch("/imagery/metadata.json", { signal: controller.signal });
+      if (!response.ok) throw new Error(`Imagery metadata returned HTTP ${response.status}.`);
+      imagery = GeoView.validateManifest(await response.json());
+      // Decode every stored tile before presenting either georeferenced map.
+      // The fetch abort also bounds requests if a static asset becomes unavailable.
+      await Promise.all(imagery.tiles.map(async (tile) => {
+        const asset = await fetch(tile.path, { signal: controller.signal, cache: "force-cache" });
+        if (!asset.ok) throw new Error("A stored satellite tile could not be loaded.");
+        const bytes = await asset.arrayBuffer();
+        const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/jpeg" }));
+        const correctSize = bitmap.width === imagery.tile_size && bitmap.height === imagery.tile_size;
+        bitmap.close();
+        if (!correctSize) throw new Error("A stored satellite tile has an unexpected size.");
+      }));
+      fieldMap.setManifest(imagery);
+      droneMap.setManifest(imagery);
+      text("imagery-location", imagery.name || "Stored satellite coverage");
+      text("imagery-source", `${imagery.year} historical mosaic · ${imagery.resolution_m} m source imagery. ${imagery.attribution.replace(/\.$/, "")}. Historical context only; not a verified navigation map.`);
+      text("drone-view-source", imagery.name || `${imagery.year} historical satellite mosaic`);
+      $("map-empty").hidden = true;
+      $("drone-map-empty").hidden = true;
+      for (const id of ["map-zoom-in", "map-zoom-out", "map-reset"]) $(id).disabled = false;
+      renderMap();
+    } catch (error) {
+      imagery = null;
+      text("map-load-status", "Historical imagery unavailable. Check the locally stored imagery files.");
+      text("drone-map-load-status", "Historical imagery unavailable. Drone camera remains disconnected.");
+      text("imagery-location", "Stored imagery unavailable");
+      text("imagery-source", "No substitute terrain is displayed. Vehicle telemetry remains available.");
+      text("map-status", error.name === "AbortError" ? "Loading local imagery timed out." : error.message);
+    } finally { clearTimeout(timer); }
+  }
+
+  $("map-zoom-in").addEventListener("click", () => fieldMap.zoom(1.5));
+  $("map-zoom-out").addEventListener("click", () => fieldMap.zoom(1 / 1.5));
+  $("map-reset").addEventListener("click", () => fieldMap.reset());
+  function selectDroneTab(camera, focus = false) {
+    $("drone-camera-panel").hidden = !camera;
+    $("drone-map-panel").hidden = camera;
+    for (const [id, selected] of [["drone-map-tab", !camera], ["drone-camera-tab", camera]]) {
+      $(id).setAttribute("aria-selected", String(selected));
+      $(id).tabIndex = selected ? 0 : -1;
+      if (selected && focus) $(id).focus();
     }
+    if (!camera) droneMap.render();
+  }
+  $("drone-map-tab").addEventListener("click", () => selectDroneTab(false));
+  $("drone-camera-tab").addEventListener("click", () => selectDroneTab(true));
+  for (const id of ["drone-map-tab", "drone-camera-tab"]) {
+    $(id).addEventListener("keydown", (event) => {
+      if (["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
+        event.preventDefault();
+        selectDroneTab(event.key === "End" || (!["Home", "End"].includes(event.key) && id === "drone-map-tab"), true);
+      }
+    });
   }
 
   async function poll() {
@@ -557,6 +612,7 @@
     message("Fault reset requested. Awaiting the server's confirmed link configuration.");
   }));
 
-  setInterval(renderStatus, 250);
+  setInterval(() => { renderStatus(); renderMap(); }, 250);
+  loadImagery();
   poll();
 })();
