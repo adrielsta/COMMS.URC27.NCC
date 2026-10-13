@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.build/
+.runtime/
+.coverage
+htmlcov/
+.venv/
+.env
+.env.*
+!.env.example
+*.log

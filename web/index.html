@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#101313">
+  <title>NCC · Communications control</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to mission controls</a>
+  <div class="simulation-banner"><span class="simulation-dot"></span><strong>SIMULATION</strong><span>Software test environment · Synthetic vehicles and geography</span></div>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="NCC communications control home"><span class="brand-mark" aria-hidden="true">N</span><span>NCC<span class="brand-caption">COMMUNICATIONS / URC 2027</span></span></a>
+    <div class="header-right"><span class="environment-label">LOCAL OPERATIONS</span><span id="connection-state" class="connection-state unavailable"><span class="status-dot"></span><span id="connection-label">Connecting</span></span></div>
+  </header>
+
+  <main id="main">
+    <div class="page-heading">
+      <div><p class="eyebrow">FIELD OPERATIONS <span>/</span> COMMAND &amp; CONTROL</p><h1>Mission control<span class="heading-dot">.</span></h1><p class="page-description">Two vehicles. One verified picture of the field.</p></div>
+      <div class="heading-actions"><button id="stop-rover" class="button stop-button" type="button"><span class="stop-symbol" aria-hidden="true"></span><span>STOP ROVER<small>Software command</small></span></button><p class="stop-note">Hardware E-stop is independent.</p></div>
+    </div>
+
+    <div id="message" class="message" role="status" aria-live="polite" hidden></div>
+    <div id="stale-warning" class="stale-warning" role="status" hidden>Telemetry is stale. Vehicle state and command outcomes are unconfirmed.</div>
+
+    <section class="summary-strip" aria-label="Session overview">
+      <div><span class="metric-label">SESSION</span><strong id="session-id">Awaiting server</strong></div>
+      <div><span class="metric-label">CONFIRMED ROVER MISSION</span><strong id="current-mission">—</strong></div>
+      <div><span class="metric-label">CONFIRMED ROVER MODE</span><strong id="current-mode">—</strong></div>
+      <div><span class="metric-label">ACTIVE ROUTE PACKAGE</span><strong id="active-package">None confirmed</strong></div>
+    </section>
+
+    <div class="workspace-grid">
+      <section class="panel map-panel" aria-labelledby="field-view-title">
+        <div class="panel-heading"><div><p class="eyebrow">SITUATIONAL AWARENESS</p><h2 id="field-view-title">Field view</h2></div><span class="tag">SYNTHETIC</span></div>
+        <div class="map-view">
+          <svg id="field-map" viewBox="0 0 800 390" role="img" aria-labelledby="map-title map-description">
+            <title id="map-title">Synthetic local vehicle position diagram</title>
+            <desc id="map-description">Shows the simulated rover, its recent reported positions, and a reviewed package when available. This is not a geographic basemap or a verified navigation route.</desc>
+            <defs><pattern id="grid-small" width="25" height="25" patternUnits="userSpaceOnUse"><path d="M 25 0 L 0 0 0 25" fill="none" stroke="#2a3330" stroke-width="0.6"/></pattern><pattern id="grid-large" width="100" height="100" patternUnits="userSpaceOnUse"><rect width="100" height="100" fill="url(#grid-small)"/><path d="M 100 0 L 0 0 0 100" fill="none" stroke="#3b4740" stroke-width="0.8"/></pattern></defs>
+            <rect width="800" height="390" fill="#151e1b"/><rect width="800" height="390" fill="url(#grid-large)"/>
+            <path d="M0 285 Q110 300 175 215 T345 190 T500 130 T800 85" class="map-terrain"/><path d="M0 315 Q105 325 190 245 T360 220 T515 160 T800 115" class="map-terrain"/>
+            <g class="map-crosshairs" aria-hidden="true"><path d="M400 180v30M385 195h30"/></g>
+            <g id="reviewed-route"></g><polyline id="rover-trail" class="rover-trail" points=""/>
+            <g id="rover-marker" hidden><circle r="18" class="marker-halo"/><circle r="8" class="marker-core"/><path d="M-3 1L0-4L3 1" class="marker-arrow"/><text x="25" y="5" class="map-label">ROVER</text></g>
+            <g transform="translate(751 40)" aria-hidden="true"><path d="M0 8v25M-5 14L0 8L5 14" stroke="#bdc7bc" stroke-width="1.5" fill="none"/><text x="0" y="0" text-anchor="middle" class="north-label">N</text></g>
+          </svg>
+          <div id="map-empty" class="map-empty"><span class="map-empty-icon" aria-hidden="true">◎</span><span>Waiting for position telemetry</span></div>
+          <div class="map-coordinate"><span class="status-dot"></span><span id="map-position">LAT — · LON —</span></div>
+          <span class="map-watermark">LOCAL DIAGRAM / AUTO SCALE</span>
+        </div>
+        <div class="map-footer"><span><i class="legend-dot rover-legend"></i>Rover</span><span><i class="legend-line"></i>Reported trail</span><span><i class="legend-line review-legend"></i>Reviewed package</span><span class="map-disclaimer">Not for navigation</span></div>
+      </section>
+
+      <section class="panel fleet-panel" aria-labelledby="fleet-title">
+        <div class="panel-heading"><div><p class="eyebrow">LIVE TELEMETRY</p><h2 id="fleet-title">Vehicle status</h2></div><span id="fleet-online" class="count-label">0 / 2 online</span></div>
+        <article class="vehicle-card" aria-labelledby="rover-title">
+          <div class="vehicle-top"><div class="vehicle-icon" aria-hidden="true"><svg viewBox="0 0 48 32"><path d="M8 22v-9h27l5 9M15 13V8h14v5M22 8V3h9M10 24h30"/><circle cx="12" cy="25" r="4"/><circle cx="35" cy="25" r="4"/></svg></div><div><h3 id="rover-title">Rover <span class="vehicle-number">01</span></h3><p id="rover-health" class="vehicle-subtitle">Awaiting telemetry</p></div><span id="rover-connection" class="tag neutral">UNKNOWN</span></div>
+          <dl class="vehicle-details"><div><dt>Mode</dt><dd id="rover-mode">—</dd></div><div><dt>Motion</dt><dd id="rover-moving">Unconfirmed</dd></div><div><dt>Telemetry age</dt><dd id="rover-age">—</dd></div><div><dt>Control lease</dt><dd id="rover-lease">None confirmed</dd></div></dl>
+          <div class="vehicle-foot"><span>BOOT ID</span><code id="rover-boot">—</code></div>
+        </article>
+        <article class="vehicle-card" aria-labelledby="drone-title">
+          <div class="vehicle-top"><div class="vehicle-icon" aria-hidden="true"><svg viewBox="0 0 48 32"><path d="M16 10l16 12M32 10L16 22M21 14h6v5h-6z"/><ellipse cx="12" cy="8" rx="8" ry="3"/><ellipse cx="36" cy="8" rx="8" ry="3"/><ellipse cx="12" cy="25" rx="8" ry="3"/><ellipse cx="36" cy="25" rx="8" ry="3"/></svg></div><div><h3 id="drone-title">Survey drone <span class="vehicle-number">02</span></h3><p id="drone-health" class="vehicle-subtitle">Awaiting telemetry</p></div><span id="drone-connection" class="tag neutral">UNKNOWN</span></div>
+          <dl class="vehicle-details"><div><dt>Flight state</dt><dd id="drone-flight">—</dd></div><div><dt>Mission</dt><dd id="drone-mission">—</dd></div><div><dt>Telemetry age</dt><dd id="drone-age">—</dd></div><div><dt>Survey product</dt><dd id="drone-product">None available</dd></div></dl>
+          <div class="vehicle-foot"><span>BOOT ID</span><code id="drone-boot">—</code></div>
+        </article>
+      </section>
+    </div>
+
+    <section class="panel operations-panel" aria-labelledby="operations-title">
+      <div class="panel-heading"><div><p class="eyebrow">OPERATOR WORKSPACE</p><h2 id="operations-title">Mission operations</h2></div><span class="section-note">Vehicle telemetry confirms every change</span></div>
+      <div class="operations-grid">
+        <div class="operation-block"><span class="step-label">01 / MISSION</span><h3>Set the mission context</h3><label for="mission-select">Mission profile</label><div class="input-action"><select id="mission-select"><option value="delivery">Delivery</option><option value="assistance">Astronaut assistance</option><option value="route_finding">Autonomous route finding</option><option value="service">Equipment servicing</option></select><button id="set-mission" class="button button-primary" type="button" data-needs-link>Apply</button></div><p id="mission-description" class="help-text">Sets both vehicles in sequence. Confirm both missions in telemetry before operating.</p><p class="help-text">Route finding requires the designated drone landing and an accepted, activated package. Programming is allowed in any mission while the rover is stopped.</p></div>
+        <div class="operation-block"><span class="step-label">02 / ROVER</span><h3>Bounded manual control</h3><div class="input-action"><label class="speed-label" for="manual-speed">Forward speed <span>simulation units</span></label><input id="manual-speed" type="number" min="0" max="1" step="0.1" value="0.2" inputmode="decimal"></div><div class="button-row"><button id="claim-control" class="button" type="button" data-needs-link>Claim control</button><button id="manual-pulse" class="button" type="button" disabled>Send pulse <span aria-hidden="true">→</span></button></div><p class="help-text">Bounded pulses are for delivery and equipment servicing, subject to receiver checks. Each click claims a fresh lease and waits for confirmation; motion stops within its 0.8-second limit.</p></div>
+        <div class="operation-block"><span class="step-label">03 / DRONE</span><h3>Survey, then land</h3><div class="drone-actions"><button id="drone-takeoff" class="button" type="button" data-needs-link><span aria-hidden="true">↑</span> Take off</button><button id="drone-survey" class="button" type="button" data-needs-link><span aria-hidden="true">◎</span> Survey</button><button id="drone-land" class="button" type="button" data-needs-link><span aria-hidden="true">↓</span> Land</button></div><p class="help-text">The simulated drone supplies a synthetic waypoint package. Review it before transfer. Landing and mission guards are checked by the rover.</p></div>
+      </div>
+    </section>
+
+    <div class="workspace-grid lower-grid">
+      <section class="panel package-panel" aria-labelledby="package-title">
+        <div class="panel-heading"><div><p class="eyebrow">SURVEY → REVIEW → TRANSFER → ACTIVATE</p><h2 id="package-title">Route package</h2></div><span id="package-badge" class="tag neutral">NO REVIEW</span></div>
+        <div class="panel-body">
+          <div class="package-source"><button id="review-survey" class="button" type="button" disabled>Review drone survey <span aria-hidden="true">→</span></button><label id="package-file-label" class="file-button button" for="package-file" aria-disabled="true">Open package JSON<input id="package-file" type="file" accept=".json,application/json" disabled></label></div>
+          <p class="help-text package-rule-note">URC 2027 Q&amp;A, Autonomy Q21: Operators may not modify maps or programming during autonomous rover motion, even while disconnected. Existing package inspection remains read-only.</p>
+          <p id="package-edit-status" class="help-text package-locked" role="status">Package inputs are locked until fresh rover telemetry confirms its motion state.</p>
+          <div id="package-empty" class="empty-state"><span class="empty-icon" aria-hidden="true">⌁</span><h3>A route starts with a review.</h3><p>Load a simulated survey or a local JSON package to inspect its coordinates and metadata.</p></div>
+          <div id="package-review" hidden><dl class="package-details"><div><dt>Package</dt><dd id="review-package-id">—</dd></div><div><dt>Version</dt><dd id="review-version">—</dd></div><div><dt>Waypoints</dt><dd id="review-waypoints">—</dd></div><div><dt>Reference system</dt><dd id="review-crs">—</dd></div></dl><p id="review-summary" class="help-text"></p><details class="json-details"><summary>Inspect full package</summary><pre id="package-json"></pre></details><div class="button-row package-actions"><button id="transfer-package" class="button button-primary" type="button" data-needs-link>Transfer for acceptance</button><button id="activate-package" class="button" type="button" disabled>Activate package</button></div><p class="help-text">Transfer verifies and stages the package. Activation is a separate request and never starts rover motion.</p></div>
+          <div id="transfer-status" class="transfer-status" hidden><div><strong id="transfer-label">Transfer</strong><span id="transfer-percent">0%</span></div><progress id="transfer-progress" value="0" max="100" aria-label="Package transfer progress">0%</progress><p id="transfer-reason" class="help-text"></p></div>
+          <div class="route-start"><div><h3>Execute the active route</h3><p id="route-readiness" class="help-text">Waiting for confirmed route readiness.</p></div><div class="button-row"><button id="recover-route" class="button" type="button" data-needs-link>Recover route</button><button id="start-route" class="button" type="button" data-needs-link>Start route <span aria-hidden="true">→</span></button></div></div>
+        </div>
+      </section>
+
+      <section class="panel activity-panel" aria-labelledby="activity-title">
+        <div class="panel-heading"><div><p class="eyebrow">REQUEST / ACKNOWLEDGMENT / OUTCOME</p><h2 id="activity-title">Command activity</h2></div><span id="command-count" class="count-label">0 commands</span></div>
+        <div class="command-legend"><span><i class="legend-dot pending-legend"></i>Requested</span><span><i class="legend-dot accepted-legend"></i>Accepted</span><span><i class="legend-dot completed-legend"></i>Completed</span></div>
+        <p class="activity-explanation">Accepted means the vehicle acknowledged a request. Completion and actual state are reported separately.</p>
+        <div id="commands-empty" class="empty-state small"><span class="empty-icon" aria-hidden="true">→</span><h3>Ready when you are.</h3><p>Requests and their confirmed outcomes appear here.</p></div><ol id="command-list" class="command-list" aria-label="Recent commands"></ol>
+      </section>
+    </div>
+
+    <section class="panel diagnostics-panel" aria-labelledby="diagnostics-title">
+      <details id="diagnostics"><summary><div><p class="eyebrow">LINK RESILIENCE LAB</p><h2 id="diagnostics-title">Network diagnostics</h2></div><span class="diagnostics-summary"><span id="fault-summary">No injected faults</span><span class="disclosure-arrow" aria-hidden="true">⌄</span></span></summary>
+        <div class="diagnostics-body"><p class="help-text">Inject faults into the simulated vehicle network to observe acknowledgment, stale telemetry, and transfer recovery. The browser’s HTTP connection is separate.</p>
+          <form id="fault-form"><div class="fault-fields"><label for="fault-loss">Packet loss <span>%</span><input id="fault-loss" name="loss" type="number" min="0" max="100" step="1" value="0"></label><label for="fault-delay">Delay <span>ms</span><input id="fault-delay" name="delay_ms" type="number" min="0" max="5000" step="10" value="0"></label><label for="fault-jitter">Jitter <span>ms</span><input id="fault-jitter" name="jitter_ms" type="number" min="0" max="5000" step="10" value="0"></label><label for="fault-duplicate">Duplicate packets <span>%</span><input id="fault-duplicate" name="duplicate" type="number" min="0" max="100" step="1" value="0"></label><label for="fault-reorder">Reorder packets <span>%</span><input id="fault-reorder" name="reorder" type="number" min="0" max="100" step="1" value="0"></label></div><div class="fault-bottom"><div class="fault-toggles"><label><input id="fault-disconnect" type="checkbox" name="disconnect">Disconnect vehicles</label><label><input id="fault-telemetry-only" type="checkbox" name="telemetry_only">Telemetry only</label><label><input id="fault-corrupt" type="checkbox" name="corrupt_bulk">Corrupt bulk transfer</label></div><div class="button-row"><button id="reset-faults" class="button" type="button" data-needs-link>Reset faults</button><button class="button button-primary" type="submit" data-needs-link>Apply faults</button></div></div></form>
+          <div class="diagnostic-columns"><div><h3>Event timeline</h3><p id="events-empty" class="help-text">No events reported.</p><ol id="event-list" class="event-list"></ol></div><div><h3>Reported metrics</h3><pre id="network-metrics" class="metrics-output">Awaiting metrics</pre><p class="help-text">Software STOP relies on a working command link. Validate the physical rover’s independent hardware E-stop separately.</p></div></div>
+        </div>
+      </details>
+    </section>
+    <footer class="site-footer"><span><span class="footer-mark" aria-hidden="true">N</span>NCC / COMMS.URC27</span><span>Simulation prototype · Hardware integration and competition review required</span><span id="last-refresh">Waiting for first update</span></footer>
+  </main>
+</body>
+</html>
