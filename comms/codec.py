@@ -1,7 +1,7 @@
-"""RoveComm v3 envelope using the actual vendored MRDT C++ codec.
+"""RoveComm v3 envelope using the vendored RoveComm C++ codec.
 
 Data ID 60000 is this simulation application's private envelope. It does not
-implement the stock MRDT rover command manifest or imply firmware compatibility.
+implement the upstream rover command manifest or imply firmware compatibility.
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ def _library() -> ctypes.CDLL:
         library = ctypes.CDLL(str(path))
     except OSError as exc:
         raise RuntimeError(
-            "MRDT codec is unavailable. Run: bash scripts/build_codec.sh"
+            "RoveComm codec is unavailable. Run: bash scripts/build_codec.sh"
         ) from exc
     signature = [
         ctypes.POINTER(ctypes.c_uint8),
@@ -58,7 +58,7 @@ def _invoke(name: str, data: bytes, output_size: int) -> bytes:
     )
     if status:
         if status == 5:
-            raise RuntimeError("Native MRDT codec failed")
+            raise RuntimeError("Native RoveComm codec failed")
         messages = {
             1: "Invalid codec argument",
             2: "Packet or payload exceeds the 8192-byte payload limit",

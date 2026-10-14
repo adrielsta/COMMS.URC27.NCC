@@ -1,7 +1,7 @@
-# Vendored MRDT RoveComm codec
+# Vendored RoveComm codec
 
 This directory contains the actual packet serializer and deserializer from
-[Missouri S&T Mars Rover Design Team RoveComm_CPP](https://github.com/MissouriMRDT/RoveComm_CPP),
+[upstream RoveComm_CPP](https://github.com/MissouriMRDT/RoveComm_CPP),
 pinned to commit **bca1c255718804803615a4d9d435a12a2e2b6969** (2026-03-21).
 The upstream project declares version 3.00.00; its wire protocol version is 3.
 
@@ -12,8 +12,8 @@ These files are copied **byte-for-byte, unmodified** from that revision:
 - [src/RoveComm/RoveCommConsts.h](https://github.com/MissouriMRDT/RoveComm_CPP/blob/bca1c255718804803615a4d9d435a12a2e2b6969/src/RoveComm/RoveCommConsts.h)
 - [LICENSE](https://github.com/MissouriMRDT/RoveComm_CPP/blob/bca1c255718804803615a4d9d435a12a2e2b6969/LICENSE)
 
-The upstream root license is MIT, copyright (c) 2023 Missouri S&T Mars Rover
-Design Team. It is retained here. Source file copyright notices remain intact.
+The upstream MIT license is retained in `LICENSE`. Source file copyright
+notices remain intact.
 
 `RoveCommManifest.h` is a **generated compatibility header**, not a copied
 upstream file. Upstream gitignores the generated full header. Our header wraps
@@ -26,7 +26,7 @@ repository has no license file.
 `SHA256SUMS` records all five file hashes. Verify with:
 
 ```bash
-(cd vendor/mrdt && sha256sum --check SHA256SUMS)
+(cd vendor/rovecomm && sha256sum --check SHA256SUMS)
 ```
 
 ## How the integration works
@@ -50,9 +50,9 @@ application. Upstream's transport threads and its full manifest are not used.
 The v3 header is six bytes: version (uint8), data ID (big-endian uint16), count
 (big-endian uint16), type (uint8). The bridge uses type UINT8_T (1), at most 8192
 payload bytes, and **application data ID 60000**. That data ID is a private
-simulation envelope chosen for this project, not an MRDT-assigned hardware
+simulation envelope chosen for this project, not an upstream-assigned hardware
 command. Application messages inside it require both endpoints in this project.
-Stock MRDT rover firmware does not acquire those application semantics merely
+Existing rover firmware does not acquire those application semantics merely
 by receiving a syntactically valid RoveComm packet. Before any hardware use,
 agree the real rover manifest, command mapping, endpoints, and safety behavior.
 

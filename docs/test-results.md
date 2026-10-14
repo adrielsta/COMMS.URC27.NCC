@@ -8,7 +8,7 @@ Verified on October 13, 2026. All tests exercise explicitly simulated vehicles; 
 ./scripts/verify.sh
 ```
 
-This checks vendored source and all nine imagery tile hashes, rebuilds the actual MRDT C++ codec, and runs the complete Python unittest and Node.js geometry suites. The latest complete devcontainer run reported:
+This checks vendored source and all nine imagery tile hashes, rebuilds the native RoveComm C++ codec, and runs the complete Python unittest and Node.js geometry suites. The latest complete devcontainer run reported:
 
 ```text
 Ran 68 tests in 23.377s
@@ -37,7 +37,7 @@ tar --exclude=__pycache__ -cf - comms native scripts tests vendor web |
 | Suite | Evidence |
 | --- | --- |
 | `test_imagery.py`, `test_geoview.cjs` | Original tile integrity/dimensions, offline bundle verification, constrained HTTP asset routes, known XYZ tile alignment, coordinate round trips, invalid/polar/outside-coverage handling, and invalid manifest rejection |
-| `test_codec.py` | Actual native MRDT pack/unpack, known wire bytes, network byte order, empty/max binary payloads, native buffer bounds, malformed/truncated/padded/wrong-field packets |
+| `test_codec.py` | Native RoveComm pack/unpack, known wire bytes, network byte order, empty/max binary payloads, native buffer bounds, malformed/truncated/padded/wrong-field packets |
 | `test_vehicle.py` | HMAC tamper rejection, strict schema, local window/lease expiry, duplicate and reordered command handling, fresh STOP exception, boot/session retirement, stopped package mutations, drone landing/phase/flight locks, conservative assistance/route manual rejection, onboard completion and visited-route recovery |
 | `test_packages.py` | Out-of-order and interrupted chunk resume, idempotent duplicates, hash corruption rejection, immutable IDs, canonical JSON, CRS/units/coordinate limits, store bounds, distinct validation/activation |
 | `test_c2_state.py` | STOP admission under saturation, safe automatic session synchronization when full, ACK endpoint matching, retired/reordered telemetry rejection |

@@ -1,4 +1,4 @@
-"""Wire-format and hostile-input checks for the real MRDT native codec."""
+"""Wire-format and hostile-input checks for the native RoveComm codec."""
 
 import ctypes
 from pathlib import Path
@@ -21,7 +21,7 @@ class CodecTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         library = root / ".build/librovecodec.so"
         sources = [root / "native/rovecodec.cpp", root / "scripts/build_codec.sh"]
-        sources.extend((root / "vendor/mrdt").glob("*"))
+        sources.extend((root / "vendor/rovecomm").glob("*"))
         if not library.exists() or any(
             path.stat().st_mtime > library.stat().st_mtime for path in sources
         ):

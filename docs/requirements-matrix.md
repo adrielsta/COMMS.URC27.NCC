@@ -72,8 +72,8 @@ These mechanisms support a more robust communications system, but the PDF does n
 
 | Control | Implementation | Verification scope |
 | --- | --- | --- |
-| Bounded authenticated application messages | `comms/protocol.py` uses HMAC-SHA256, canonical JSON, explicit schema/size/depth limits and the MRDT RoveComm codec wrapper. | Authentication protects integrity/peer knowledge of the shared key; it is not encryption or RF access control. See protocol documentation and automated tests. |
-| Defensive MRDT packet integration | `comms/codec.py`, native wrapper, and preserved upstream sources under `vendor/mrdt`. | `tests/test_codec.py` covers exact wire bytes, network byte order, truncation, invalid headers, size limits, arbitrary packets and native output capacity. Compatibility of this application payload with an existing MRDT rover is not implied. |
+| Bounded authenticated application messages | `comms/protocol.py` uses HMAC-SHA256, canonical JSON, explicit schema/size/depth limits and the RoveComm codec wrapper. | Authentication protects integrity/peer knowledge of the shared key; it is not encryption or RF access control. See protocol documentation and automated tests. |
+| Defensive RoveComm packet integration | `comms/codec.py`, native wrapper, and preserved upstream sources under `vendor/rovecomm`. | `tests/test_codec.py` covers exact wire bytes, network byte order, truncation, invalid headers, size limits, arbitrary packets and native output capacity. Compatibility of this application payload with existing rover firmware is not implied. |
 | Bounded resumable package transfer | `comms/packages.py` uses declared lengths/chunk counts, bounded stores, canonical JSON, SHA-256, idempotent chunks, immutable package identity and separate validation/activation. | Digest checks identify corruption; message HMAC supplies shared-key authentication. Products are expressly synthetic waypoints, not drone imagery, reconstruction, traversability or autonomous flight. |
 
 ## Focused software evidence

@@ -1,11 +1,11 @@
 # Architecture
 
-The initially selected repository contained only a README. The owner clarified that no prior Comms2027 implementation existed and authorized building from Missouri's software. This implementation reuses the MIT-licensed MRDT C++ packet codec at runtime, then adds application-level reliability and URC-specific simulation policy. It does not import unlicensed Python/Base implementations or pretend to preserve pre-existing application code.
+The system uses the MIT-licensed RoveComm C++ packet codec at runtime, with application-level reliability and URC-specific simulation policy implemented around it.
 
 ```mermaid
 flowchart LR
     UI[Private dashboard] -->|same-origin HTTP + CSRF| C2[C2 process]
-    C2 -->|priority queues + fault injection| W[HMAC envelope / MRDT codec]
+    C2 -->|priority queues + fault injection| W[HMAC envelope / RoveComm codec]
     W <-->|loopback UDP| R[Independent rover process]
     W <-->|loopback UDP| D[Independent drone process]
     D -->|synthetic survey telemetry| C2
@@ -16,7 +16,7 @@ flowchart LR
 
 `comms.supervisor` starts three Python processes, each independently replaceable. The rover owns position, mode, local control lease, route execution, received packages and activation. The drone owns flight state and synthetic product generation. C2 owns operator requests, acknowledgement tracking, UI snapshots, transfer scheduling and fault injection. The UI never changes confirmed vehicle state optimistically.
 
-All datagrams are serialized/deserialized through the vendored native MRDT codec. A checked C ABI prevents the upstream decoder from seeing inconsistent lengths/types/counts. The application envelope uses HMAC-SHA256 with a generated 32-byte key in a mode-0600 local file. Native source hashes are verified before every build. Authentication here is a development boundary; no radio security/certificate/key provisioning integration is claimed.
+All datagrams are serialized/deserialized through the vendored native RoveComm codec. A checked C ABI prevents the upstream decoder from seeing inconsistent lengths/types/counts. The application envelope uses HMAC-SHA256 with a generated 32-byte key in a mode-0600 local file. Native source hashes are verified before every build. Authentication here is a development boundary; no radio security/certificate/key provisioning integration is claimed.
 
 Default ports are HTTP 8080, C2 UDP 12050, rover UDP 12051, drone UDP 12052. Every listener binds localhost. Only HTTP 8080 is configured for private Codespaces forwarding. HTTP accepts exact local or platform-derived forwarded Hosts, checks same-origin requests, requires a CSRF token and JSON content type for mutations, and limits body size and handler concurrency. Codespaces provides external user authentication; the local HTTP application does not replace it. Never make the forwarded port public.
 

@@ -1,6 +1,6 @@
 # COMMS.URC27.NCC — URC 2027 communications
 
-A runnable **simulation and communications development system**, using Missouri S&T Mars Rover Design Team's actual RoveComm C++ packet codec. C2, rover, and drone run in three separate processes. No radio, motors, flight controller, LiDAR, cameras, or physical E-stop are connected.
+A runnable **simulation and communications development system**, using a native RoveComm C++ packet codec. C2, rover, and drone run in three separate processes. No radio, motors, flight controller, LiDAR, cameras, or physical E-stop are connected.
 
 The governing source is the supplied *University Rover Challenge 2027 — Requirements and Guidelines*. The organiser-hosted PDF was verified byte-for-byte against the attachment, and official Q&A (last listed update October 11, 2026) was checked. See the [requirements matrix](docs/requirements-matrix.md), [source provenance](docs/rules-source.md), and [hardware gaps](docs/hardware-gaps.md).
 
@@ -81,12 +81,12 @@ The verifier runs this workflow across actual subprocesses, including lost compl
 | `comms/vehicle.py` | Independent rover/drone state machines and UDP CLI |
 | `comms/protocol.py`, `comms/link.py` | Authenticated session protocol and bounded fault scheduler |
 | `comms/packages.py` | Resumable, integrity-checked synthetic package receiver |
-| `vendor/mrdt/`, `native/`, `comms/codec.py` | Pinned MIT MRDT C++ codec and checked native bridge |
+| `vendor/rovecomm/`, `native/`, `comms/codec.py` | Pinned MIT-licensed RoveComm C++ codec and checked native bridge |
 | `tests/`, `scripts/` | Unit, protocol, HTTP, independent-process tests and start/demo commands |
 | `.devcontainer/`, `.github/workflows/` | Codespaces environment and build/test workflow |
 | `docs/` | Architecture, protocol, rules, results and integration decisions |
 
-MRDT `RoveComm_CPP` revision `bca1c255718804803615a4d9d435a12a2e2b6969` is preserved with its [MIT license](vendor/mrdt/LICENSE), source hashes and [provenance](vendor/mrdt/README.md). The native pack/unpack routines execute for every simulator datagram. This project does not claim that stock MRDT firmware understands the new application commands: data ID 60000 is a simulation-only envelope and requires a reviewed team manifest before hardware deployment. Python/Base repositories without an identified license were not copied.
+`RoveComm_CPP` revision `bca1c255718804803615a4d9d435a12a2e2b6969` is preserved with its [MIT license](vendor/rovecomm/LICENSE), source hashes and [provenance](vendor/rovecomm/README.md). The native pack/unpack routines execute for every simulator datagram. This project does not claim that existing rover firmware understands the new application commands: data ID 60000 is a simulation-only envelope and requires a reviewed team manifest before hardware deployment. Python/Base repositories without an identified license were not copied.
 
 Read [architecture](docs/architecture.md) and [protocol](docs/protocol.md) before adding an adapter.
 

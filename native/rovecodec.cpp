@@ -1,4 +1,4 @@
-// Bounds-checked C ABI around the unmodified MRDT RoveComm v3 codec.
+// Bounds-checked C ABI around the unmodified RoveComm v3 codec.
 #include "RoveCommPacket.h"
 
 #include <cstddef>
@@ -8,7 +8,7 @@
 namespace {
 constexpr std::size_t kMaxPayload = 8192;
 constexpr std::size_t kHeaderSize = ROVECOMM_PACKET_HEADER_SIZE;
-// Local application envelope: NOT a stock MRDT rover command assignment.
+// Local application envelope: NOT a standard rover command assignment.
 constexpr std::uint16_t kApplicationDataId = 60000;
 constexpr std::uint8_t kByteType = manifest::DataTypes::UINT8_T;
 static_assert(kHeaderSize == 6);

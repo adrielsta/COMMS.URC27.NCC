@@ -1,6 +1,6 @@
 """Authenticated application messages carried by the vendored RoveComm codec.
 
-This schema is a team application protocol, not an upstream MRDT data manifest.
+This schema is a team application protocol, not an upstream rover data manifest.
 Neither timestamps from another process nor arrival time alone grant authority.
 """
 import hashlib

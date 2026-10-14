@@ -1,8 +1,8 @@
 # Protocol and integration contract
 
-## MRDT wire compatibility
+## RoveComm wire compatibility
 
-Vendor: `MissouriMRDT/RoveComm_CPP`, revision `bca1c255718804803615a4d9d435a12a2e2b6969`. See `vendor/mrdt/README.md` and preserved `LICENSE`/`SHA256SUMS`. Its actual `PackPacket<uint8_t>` and `UnpackData<uint8_t>` run in `native/rovecodec.cpp` through `comms/codec.py`.
+See the [RoveComm provenance record](../vendor/rovecomm/README.md) and preserved `LICENSE`/`SHA256SUMS` for the pinned upstream source. Its actual `PackPacket<uint8_t>` and `UnpackData<uint8_t>` run in `native/rovecodec.cpp` through `comms/codec.py`.
 
 | Field | Bytes | Value here |
 | --- | --- | --- |

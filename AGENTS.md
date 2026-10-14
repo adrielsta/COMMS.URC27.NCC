@@ -14,12 +14,12 @@ This is a simulation communications system, not a physical vehicle controller. V
 - `comms/c2.py`: authenticated UDP application messages, HTTP API, request/result tracking, transfers.
 - `comms/vehicle.py`: independent simulated rover/drone and receiver-local safety state.
 - `comms/packages.py`: bounded package validation/storage and separate activation.
-- `comms/protocol.py`: HMAC-authenticated envelope around actual native MRDT codec.
+- `comms/protocol.py`: HMAC-authenticated envelope around actual native RoveComm codec.
 - `comms/link.py`: bounded priority scheduler and fault injection.
 - `comms/supervisor.py`: three independent process lifecycles, logs and restarts.
 - `web/`: dependency-free responsive dashboard, served only by C2.
 - `web/geoview.js`, `web/imagery/`: georeferenced historical satellite basemap and original licensed tiles; preserve attribution and pinned hashes. Vehicle overlays remain simulated.
-- `vendor/mrdt/`: preserved third-party files; do not edit vendored source or hashes to make a check pass.
+- `vendor/rovecomm/`: preserved third-party files; do not edit vendored source or hashes to make a check pass.
 - `native/`, `comms/codec.py`: validate lengths and fields before entering upstream native codec.
 - `tests/`: standard-library unittest suites, including real subprocess/UDP/HTTP workflows.
 
