@@ -159,7 +159,8 @@
       if (["rejected", "timeout"].includes(commandState?.status)) {
         throw new Error(commandState.reason || "The prerequisite command did not complete. Further requests were not sent.");
       }
-      if (live() && predicate()) return;
+      // A matching telemetry value is not confirmation of this request.
+      if (live() && commandState?.status === "completed" && predicate(commandState)) return commandState;
       await new Promise((resolve) => setTimeout(resolve, 50));
     }
     throw new Error("The required vehicle state was not confirmed in time. Further requests were not sent; inspect activity before retrying.");
@@ -204,7 +205,7 @@
     tag.textContent = !vehicle?.state ? "UNKNOWN" : fresh ? "LIVE" : "STALE";
     const age = vehicleAge(vehicle);
     text(`${name}-age`, Number.isFinite(age) ? `${age.toFixed(1)} s${fresh ? "" : " · stale"}` : "No telemetry");
-    text(`${name}-health`, friendly(actual.health) === "—" ? "Awaiting telemetry" : friendly(actual.health));
+    text(`${name}-health`, actual.health && typeof actual.health === "object" ? friendly(actual.health.overall) : friendly(actual.health) === "—" ? (fresh ? "Health not instrumented" : "Awaiting telemetry") : friendly(actual.health));
     text(`${name}-boot`, vehicle?.boot_id);
     if (name === "rover") {
       text("rover-mode", friendly(actual.mode));
@@ -223,6 +224,21 @@
     text("connection-label", connected ? "C2 connected" : state.lastSuccess ? "C2 unavailable" : "Connecting");
     const vehicles = state.data?.vehicles || {};
     const rover = vehicles.rover?.state || {};
+    const health = rover.health && typeof rover.health === "object" ? rover.health : null;
+    const elapsed = (Date.now() - state.lastSuccess) / 1000;
+    const healthFresh = connected && elapsed < 1 && vehicles.rover?.connected === true && vehicles.rover?.synced === true
+      && vehicleAge(vehicles.rover) < 1 && health?.schema_version === 1 && health?.model_id === "ncc-six-wheel-v1"
+      && health?.source === "simulation" && health?.stale === false
+      && typeof health.age_s === "number" && Number.isFinite(health.age_s) && health.age_s + elapsed < 1;
+    const overall = healthFresh && ["nominal", "warning", "critical", "unknown", "stale"].includes(health.overall)
+      ? health.overall : health ? "stale" : "unknown";
+    text("header-rover-health", overall.toUpperCase());
+    $("header-rover-health").className = `health-state ${overall}`;
+    const build = state.data?.build;
+    const buildLabel = build?.version ? `V${build.version} · ${build.commit || "source archive"}${build.dirty ? " + local changes" : ""}` : "SYSTEMS CONSOLE 02";
+    text("console-build", buildLabel);
+    text("footer-build", buildLabel);
+    window.RoverHealth?.render(state.data, state.lastSuccess, state.httpHealthy);
     $("stale-warning").hidden = connected && vehicleFresh(vehicles.rover) && vehicleFresh(vehicles.drone);
     text("session-id", typeof state.data?.session === "object" ? state.data.session.id || friendly(state.data.session) : state.data?.session || "Awaiting server");
     text("current-mission", missionNames[rover.mission] || friendly(rover.mission));
@@ -251,7 +267,10 @@
     document.querySelectorAll("[data-needs-link]").forEach((button) => { button.disabled = !healthy || state.inFlight.has(button.id); });
     const vehicles = state.data?.vehicles || {};
     const packageLock = packageEditLock();
-    $("manual-pulse").disabled = !healthy || !vehicleFresh(vehicles.rover) || state.inFlight.has("manual-pulse");
+    const manualPending = state.inFlight.has("manual-pulse") || state.inFlight.has("claim-control");
+    const manualAvailable = healthy && vehicleFresh(vehicles.rover) && vehicles.rover?.synced === true;
+    $("manual-pulse").disabled = !manualAvailable || manualPending;
+    $("claim-control").disabled = !manualAvailable || manualPending;
     $("review-survey").disabled = Boolean(packageLock) || !vehicles.drone?.state?.survey_product;
     $("package-file").disabled = Boolean(packageLock);
     $("package-file-label").setAttribute("aria-disabled", String(Boolean(packageLock)));
@@ -487,7 +506,8 @@
   }
 
   const workspaces = {
-    overview: { title: "Field overview", description: "Vehicle state, field position and rover controls." },
+    overview: { title: "Mission operations", description: "Field position, vehicle telemetry and command authority." },
+    health: { title: "Rover systems", description: "Component health, power distribution and observed sensor data." },
     drone: { title: "Drone operations", description: "Position, camera connection and survey controls." },
     routes: { title: "Route planning", description: "Review, transfer and activate a route before departure." },
     network: { title: "Network diagnostics", description: "Test the simulated link and inspect reported events." },
@@ -495,7 +515,7 @@
   const workspaceTabs = [...document.querySelectorAll("[data-nav-view]")];
 
   function selectWorkspace(name, { history = false, focus = false } = {}) {
-    const view = Object.hasOwn(workspaces, name) ? name : "overview";
+    const view = Object.hasOwn(workspaces, name) ? name : "health";
     const focusedPanel = document.activeElement?.closest("[data-workspace-view]");
     document.querySelectorAll("[data-workspace-view]").forEach((panel) => {
       panel.hidden = panel.dataset.workspaceView !== view;
@@ -514,7 +534,7 @@
     }
     if (focus || (focusedPanel && focusedPanel.hidden)) $("workspace-title").focus({ preventScroll: true });
     // A previously hidden SVG needs its visible dimensions before projection.
-    requestAnimationFrame(() => { fieldMap.render(); droneMap.render(); });
+    requestAnimationFrame(() => { fieldMap.render(); droneMap.render(); window.RoverHealth?.onViewChange?.(); });
   }
 
   workspaceTabs.forEach((tab, index) => {
@@ -541,10 +561,8 @@
   });
   window.addEventListener("popstate", () => selectWorkspace(window.location.hash.slice(1)));
   window.addEventListener("hashchange", () => selectWorkspace(window.location.hash.slice(1)));
-  const mobileNavigation = window.matchMedia("(max-width: 800px)");
-  const setNavigationOrientation = () => $("workspace-nav").setAttribute("aria-orientation", mobileNavigation.matches ? "horizontal" : "vertical");
-  mobileNavigation.addEventListener("change", setNavigationOrientation);
-  setNavigationOrientation();
+  $("workspace-nav").setAttribute("aria-orientation", "horizontal");
+  window.RoverHealth?.init({ post, command, message });
   selectWorkspace(window.location.hash.slice(1));
 
   async function poll() {
@@ -590,13 +608,21 @@
   $("manual-pulse").addEventListener("click", () => withButton("manual-pulse", async () => {
     const speed = Number($("manual-speed").value);
     if (!$("manual-speed").checkValidity() || !Number.isFinite(speed)) throw new Error("Choose a forward speed between 0 and 1.");
-    const previousLease = state.data?.vehicles?.rover?.state?.lease_id;
+    const session = state.data?.session;
+    const bootId = state.data?.vehicles?.rover?.boot_id;
     const claim = await command("rover", "CLAIM_CONTROL");
-    await waitForConfirmed(() => {
+    const granted = await waitForConfirmed((completed) => {
       const rover = state.data?.vehicles?.rover;
-      return vehicleFresh(rover) && rover.state?.lease_id && rover.state.lease_id !== previousLease;
+      if (state.data?.session !== session || rover?.boot_id !== bootId) {
+        throw new Error("The rover or C2 session changed. Manual pulse was not sent; request control again after reconciliation.");
+      }
+      return vehicleFresh(rover) && rover.synced === true && completed.vehicle === "rover"
+        && completed.action === "CLAIM_CONTROL" && completed.boot_id === bootId
+        && typeof completed.result?.lease_id === "string" && /^[a-f0-9]{24}$/.test(completed.result.lease_id);
     }, claim.id, 3500);
-    await command("rover", "MANUAL", { speed, lease_id: state.data.vehicles.rover.state.lease_id });
+    // Use this claim's authenticated ACK token, never a different claim's
+    // telemetry token. Receiver-local expiry remains authoritative and unchanged.
+    await command("rover", "MANUAL", { speed, lease_id: granted.result.lease_id });
   }));
   onCommand("drone-takeoff", "drone", "DRONE_TAKEOFF");
   onCommand("drone-survey", "drone", "DRONE_SURVEY");

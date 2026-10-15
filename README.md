@@ -2,6 +2,12 @@
 
 A runnable **simulation and communications development system**, using a native RoveComm C++ packet codec. C2, rover, and drone run in three separate processes. No radio, motors, flight controller, LiDAR, cameras, or physical E-stop are connected.
 
+The mission console includes an interactive rover cutaway, grouped engineering
+channels, current/minimum/maximum/average statistics, trends and a fault
+annunciator. These displays share authenticated telemetry from the independent
+rover simulator. See [rover health](docs/rover-health.md) and the
+[REA investigation of HWiNFO](docs/hwinfo-reconstruction.md).
+
 The governing source is the supplied *University Rover Challenge 2027 — Requirements and Guidelines*. The organiser-hosted PDF was verified byte-for-byte against the attachment, and official Q&A (last listed update October 11, 2026) was checked. See the [requirements matrix](docs/requirements-matrix.md), [source provenance](docs/rules-source.md), and [hardware gaps](docs/hardware-gaps.md).
 
 ## Quick start: GitHub Codespaces
@@ -24,6 +30,22 @@ The governing source is the supplied *University Rover Challenge 2027 — Requir
 
 For the optional browser regression check, use an environment with Python Playwright and Chromium installed, then run `python3 scripts/check_ui.py --screenshots /tmp/ncc-ui`. It starts isolated simulators on free ports, exercises navigation and vehicle workflows, and saves screenshots. These browser tools are not required by the dashboard or `verify.sh`.
 
+Health-specific browser checks: `python3 scripts/check_health_ui.py --screenshots /tmp/ncc-health-ui`.
+
+**Updating an existing Codespace:** stop the running supervisor with `Ctrl-C`,
+then run the following in the repository's Bash terminal and refresh port 8080:
+
+```bash
+git fetch origin &&
+git switch feature/urc2027-comms-integration &&
+git pull --ff-only origin feature/urc2027-comms-integration &&
+./scripts/start.sh
+```
+
+The header shows the running server's version and Git revision. Version **0.2.0**
+opens **Rover systems** with **Anatomy** and **Sensors** views. Pushing new code
+does not update an already-open Codespace automatically.
+
 The container image is pinned by version and verified digest. Local Docker validation is recorded in [test results](docs/test-results.md); current remote checks are shown on the pull request. No hosted Codespace has been validated.
 
 **Using Windows PowerShell:** run these commands in the Codespace's Bash terminal, from the repository folder. They are Linux shell scripts. For a local Windows checkout, open WSL2 with `wsl` from PowerShell, change to your checkout folder, install the prerequisites below, and run `./scripts/start.sh` there.
@@ -38,7 +60,7 @@ Field operation must be off-grid: no cloud or satellite internet may be required
 
 ## Satellite field view and drone view
 
-The dashboard has four workspaces: **Overview** for the field map, vehicle state and rover controls; **Drone** for position, camera status and survey controls; **Routes** for package review and execution; and **Network** for fault injection and diagnostics. Software STOP and command outcomes remain available across workspaces. Navigation supports arrow keys, Home/End and browser Back/Forward. See the [interface design notes](docs/ui-design.md) for the Taste and 21st.dev references.
+The dashboard has five workspaces: **Mission** for the field map, vehicle state and rover controls; **Rover systems** for the cutaway, health channels, trends and alarms; **Drone** for position, camera status and survey controls; **Routes** for package review and execution; and **Network** for fault injection and diagnostics. Software STOP and command outcomes remain available across workspaces. Navigation supports arrow keys, Home/End and browser Back/Forward. See the [interface design notes](docs/ui-design.md) for the research and skill sources.
 
 The field map uses real **2016 Sentinel-2 imagery around MDRS, Utah**, stored locally with its attribution and license. Rover/drone markers and reviewed routes use their WGS 84 coordinates on a Web Mercator map. Drag or use arrow keys to pan, use the zoom buttons, and select **Reset view** to return. Positions outside the stored area are identified; stale positions remain visibly marked.
 
@@ -58,10 +80,10 @@ It sends software STOP, verifies the rover's acknowledgement, and returns nonzer
 
 For the synthetic survey-to-route workflow in the dashboard:
 
-1. In **Overview**, leave both vehicles in **Delivery**, or select **Astronaut assistance**. Open **Drone**, take off the simulated drone and generate a synthetic survey.
+1. In **Mission**, leave both vehicles in **Delivery**, or select **Astronaut assistance**. Open **Drone**, take off the simulated drone and generate a synthetic survey.
 2. Open **Routes** and load the survey into the review panel. Inspect its WGS 84 coordinates, version and synthetic label. Transfer it to the rover. **Accepted** means schema and SHA-256 validated; it does not activate the route.
 3. Explicitly activate the accepted package while stopped. Return to **Drone** and land at the designated pad.
-4. In **Overview**, set both vehicles to **Route finding**. The drone flight lock and fresh landing report must reach the rover before departure.
+4. In **Mission**, set both vehicles to **Route finding**. The drone flight lock and fresh landing report must reach the rover before departure.
 5. In **Routes**, start the route. The rover executes the supplied synthetic waypoints onboard. **Accepted** and **Completed** are separate acknowledgements.
 6. Try fault profiles in **Network** while watching freshness, command results, and diagnostics. A disconnected autonomous route can continue onboard; manual pulses always expire locally. After a restart, use explicit new commands.
 
@@ -83,6 +105,8 @@ The verifier runs this workflow across actual subprocesses, including lost compl
 | --- | --- |
 | `comms/c2.py`, `web/` | HTTP dashboard, command tracking, review and transfer orchestration |
 | `comms/vehicle.py` | Independent rover/drone state machines and UDP CLI |
+| `comms/health.py`, `web/health.js` | Simulated engineering channels, supply dependencies, alarms and observed sensor statistics |
+| `vendor/anatomy/`, `scripts/build_rover_anatomy.mjs` | Preserved MIT geometry kit and original rover cutaway generator |
 | `comms/protocol.py`, `comms/link.py` | Authenticated session protocol and bounded fault scheduler |
 | `comms/packages.py` | Resumable, integrity-checked synthetic package receiver |
 | `vendor/rovecomm/`, `native/`, `comms/codec.py` | Pinned MIT-licensed RoveComm C++ codec and checked native bridge |

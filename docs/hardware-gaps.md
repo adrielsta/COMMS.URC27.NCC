@@ -49,6 +49,16 @@ Full points are possible without a drone (§2.b.i, p. 9). A simulator's “lande
 
 ## Hardware decisions still needed
 
+The [rover health monitor](rover-health.md) currently receives simulated values.
+Its six-wheel topology and electrical/temperature limits are illustrative. Add
+calibrated BMS and branch voltage/current sensing, fuse/enable feedback, motor
+fault/RPM data, computer/radio metrics and sensor-specific validity before using
+the cutaway for physical diagnosis. Preserve acquisition time, sample identity
+and quality; a received heartbeat or nominal voltage alone does not establish
+that a subsystem works. Replace the reference geometry with the team's CAD and
+map every physical channel to its actual component. There is no HWiNFO hardware
+bridge or physical acquisition adapter in this repository.
+
 Record actual choices before implementing adapters: rover/drone computers and OS; motor/actuator controller interfaces and independent watchdog; battery/E-stop circuit; GNSS and inertial sensors; camera/audio devices; ranging/perception sensors; radio part numbers, bands and lawful configurations; drone flight controller and bridge protocol; field C2 laptop; LED driver; and whether a drone is fielded at all. These selections are intentionally open because the task supplied no hardware specifications.
 
 ## Release gate

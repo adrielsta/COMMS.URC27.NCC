@@ -114,11 +114,11 @@ def check_ui(browser, simulation, screenshot_dir):
                     and item["vehicle"] == vehicle and item["action"] == action
                     and item["status"] == status)
 
-    selected("overview")
-    for view in ("drone", "routes", "network", "overview"):
+    selected("health")
+    for view in ("overview", "drone", "routes", "network", "health", "overview"):
         nav(view)
     page.locator("#nav-overview").focus()
-    for key, view in (("ArrowRight", "drone"), ("End", "network"),
+    for key, view in (("ArrowRight", "health"), ("ArrowRight", "drone"), ("End", "network"),
                       ("ArrowLeft", "routes"), ("Home", "overview")):
         page.keyboard.press(key)
         selected(view)
@@ -141,19 +141,21 @@ def check_ui(browser, simulation, screenshot_dir):
 
     for width, height in ((1440, 1050), (1024, 900), (768, 1024), (390, 844), (320, 720)):
         page.set_viewport_size({"width": width, "height": height})
-        for view in ("overview", "drone", "routes", "network"):
+        for view in ("health", "overview", "drone", "routes", "network"):
             nav(view)
             page.wait_for_timeout(120)
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth"), (width, view)
-            if width == 1440 or (width == 390 and view == "overview"):
+            if width == 1440 or (width == 390 and view in ("overview", "health")):
                 page.screenshot(path=str(screenshot_dir / f"{view}-{width}.png"), full_page=True)
-    print("PASS: all four views fit 1440, 1024, 768, 390 and 320 px widths", flush=True)
+    print("PASS: all five views fit 1440, 1024, 768, 390 and 320 px widths", flush=True)
 
     page.set_viewport_size({"width": 1440, "height": 1050})
     nav("overview")
     page.wait_for_function("() => document.querySelector('#map-empty').hidden")
     assert page.locator("#field-map .satellite-tiles image").count() == 9
     assert page.locator("#drone-map .satellite-tiles image").count() == 9
+    assert "2016" in page.locator(".imagery-credit").inner_text()
+    page.locator(".imagery-source details summary").click()
     assert "2016" in page.locator("#imagery-source").inner_text()
     tile = page.locator("#field-map .satellite-tiles image").first
     initial = float(tile.get_attribute("width"))
@@ -252,7 +254,7 @@ def check_ui(browser, simulation, screenshot_dir):
     missing.route("**/imagery/*.jpg", lambda route: route.fulfill(status=404, body="missing"))
     fallback = missing.new_page()
     fallback.on("pageerror", lambda error: errors.append(str(error)))
-    fallback.goto(simulation.url)
+    fallback.goto(simulation.url + '/#overview')
     fallback.wait_for_function("() => document.querySelector('#map-load-status').textContent.includes('unavailable')")
     assert fallback.locator("#map-empty").is_visible()
     assert fallback.locator("#field-map .satellite-tiles image").count() == 0

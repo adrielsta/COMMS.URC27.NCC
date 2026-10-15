@@ -36,6 +36,13 @@ Commands contain `kind=command`, `vehicle`, `boot_id`, C2 `session`, unique `id`
 
 Lifecycle: `requested` → `accepted` → `completed`, or `rejected`; any missing confirmation can become `timeout`. Immediate operations return completed directly. Long-running route commands return accepted then a separate completion. STOP or session replacement rejects/cancels a pending route. A lost ACK never becomes success based on send return values, elapsed time or matching telemetry.
 
+For a completed `CLAIM_CONTROL`, the HTTP command record additionally exposes
+`result.lease_id` from that command's matched ACK, alongside its target `boot_id`.
+The browser binds its manual pulse to this result, rather than a potentially
+different lease seen in telemetry. Full ACK state remains internal. Receiving
+this result does not renew the lease or establish that it is still valid; the
+rover's local expiry and session checks remain authoritative.
+
 Initial requests have a 2.5-second acknowledgement deadline and at most four transmissions, spaced 0.3 seconds. Retransmissions use identical bytes and do not renew authority. Accepted route commands have a fixed 120-second completion deadline and at most 124 total transmissions, polling the cached result every second. The vehicle caches 256 results; a cached duplicate returns its prior result without side effects. If the result was evicted, its old window has expired and cannot cause repeat execution. Receiver route duration is bounded by 128 synthetic points at 0.25 seconds each.
 
 Session `SYNC` stops prior motion on a changed session, retires the old session and establishes control sequencing. Actuation, mission and activation commands are strictly ordered. Package BEGIN/CHUNK/COMMIT and forwarded peer reports do not advance the control sequence: chunks have their own identity/index/integrity checks, and reports validate the originating peer's boot/sequence. This allows essential control to overtake independent bulk traffic without invalidating an otherwise resumable upload. All lanes retain session and receiver-window validation. A fresh STOP is exempt from ordinary sequence rejection but still requires matching boot/session and live window. It cannot bypass network loss or a dead vehicle; it is **not** the physical E-stop.
@@ -55,6 +62,7 @@ Session `SYNC` stops prior motion on a changed session, retires the old session 
 | `ACTIVATE_PACKAGE` | Explicitly select a validated package while stopped |
 | `START_ROUTE` | Execute active synthetic route after landing/flight-lock guards |
 | `RECOVER_ROUTE` | Simulated autonomous reverse traversal of visited route points |
+| `SIM_HEALTH_FAULT` | Change one rover engineering telemetry fault; not physical switching or a motion policy |
 
 ## Route package v1
 
@@ -75,6 +83,15 @@ GET `/api/state` returns simulation status, vehicle snapshots/freshness, command
 - POST `/api/command`: `{vehicle,action,args}`; returns the requested command record.
 - POST `/api/transfer`: `{package}`; validates the review object and queues chunk transfer.
 - POST `/api/faults`: complete desired fault settings; unspecified fields reset to defaults.
+- GET `/api/health/catalog`: illustrative rover component definitions, units, dependencies, limits and freshness.
+- POST `/api/health/ack`: `{alarm_id}`; records operator acknowledgment without resolving the condition.
+
+Rover state includes a versioned health sample with an independent sequence.
+C2 validates channel values, evaluates independent fault conditions and adds
+receipt-local freshness; repeated health samples cannot refresh that deadline.
+`/api/state.health_monitor` carries bounded alarm and event history. See the
+[full rover health contract](rover-health.md) for source identity, stale/unknown
+handling, sample statistics, injection and hardware integration boundaries.
 
 HTTP acceptance is only C2 queue admission. It never means the vehicle accepted or executed a command. API validation errors return 400, Host/Origin/CSRF violations 403, oversized input 413 and wrong media type 415.
 

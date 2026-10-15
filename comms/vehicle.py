@@ -10,6 +10,7 @@ from pathlib import Path
 
 from .packages import PackageError, PackageStore
 from .protocol import ProtocolError, decode_message, encode_message
+from .health import SimulatedHealth
 
 WINDOW_TTL = 1.25
 LEASE_TTL = 0.8
@@ -67,6 +68,7 @@ class Vehicle:
         self.survey_product = None
         self.survey_version = 0
         self.last_tick = self.clock()
+        self.health = SimulatedHealth() if kind == 'rover' else None
 
     @staticmethod
     def _bounded_put(mapping, key, value, limit):
@@ -79,7 +81,7 @@ class Vehicle:
         state = {
             "mode": self.mode, "mission": self.mission, "position": copy.deepcopy(self.position),
             "moving": self.moving, "flight_state": self.flight_state, "at_designated_pad": self.at_designated_pad,
-            "health": "ok", "lease_id": self.lease_id, "active_package": self.packages.active_package,
+            "lease_id": self.lease_id, "active_package": self.packages.active_package,
             "packages": self.packages.summaries(), "synthetic": True,
             "route_status": copy.deepcopy(self.route_status), "interventions": copy.deepcopy(self.interventions[-8:]),
             "session": self.session,
@@ -94,6 +96,7 @@ class Vehicle:
         if self.kind == "drone" and self.survey_product is not None:
             state["survey_product"] = copy.deepcopy(self.survey_product)
         if self.kind == "rover":
+            state["health"] = self.health.sample(self.clock(), self.moving)
             state["drone_state_fresh"] = self.drone_report is not None and self.clock() - self.drone_seen < DRONE_TTL
         return state
 
@@ -285,6 +288,10 @@ class Vehicle:
             return self._drone_action(action, args)
         if self.kind != "rover":
             raise ValueError("action requires rover")
+        if action == 'SIM_HEALTH_FAULT':
+            _fields(args, ('component', 'fault'))
+            self.health.inject(args['component'], args['fault'])
+            return 'completed', 'simulation health model updated; physical hardware and motion policy are unchanged'
         if action in ("PACKAGE_BEGIN", "PACKAGE_CHUNK", "PACKAGE_COMMIT") and self.moving:
             raise ValueError("package changes require a stopped rover (1.e.iii)")
         if action == "CLAIM_CONTROL":

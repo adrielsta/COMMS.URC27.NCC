@@ -1,0 +1,40 @@
+.rover-anatomy{--anatomy-paper:#182129;--anatomy-face:#25323b;--anatomy-top:#35434d;--anatomy-shade-0:#151e25;--anatomy-shade-1:#1c2730;--anatomy-shade-2:#26333d;--anatomy-shade-3:#303e48;--anatomy-hi:#acbac4;--anatomy-mid:#74848f;--anatomy-lo:#52626d;--anatomy-faint:#394954;--anatomy-lit:#e2e9ed;--anatomy-dot:#d0dbe1;--ra-status:#84939d;position:relative;min-width:0;touch-action:pan-y}
+.rover-anatomy[data-theme="light"]{--anatomy-paper:#dae1e5;--anatomy-top:#f2f5f7;--anatomy-shade-0:#b7c2c9;--anatomy-shade-1:#c5ced4;--anatomy-shade-2:#d4dce1;--anatomy-shade-3:#e2e8ec;--anatomy-hi:#435562;--anatomy-mid:#617582;--anatomy-lo:#81949f;--anatomy-faint:#a3b3bd;--anatomy-dot:#425b6b}
+.rover-anatomy .iso-svg{display:block;width:100%;height:auto;overflow:visible}
+.rover-anatomy .iso-svg path,.rover-anatomy .iso-svg circle{vector-effect:non-scaling-stroke}
+.rover-anatomy .iso-fill{fill:var(--anatomy-paper);stroke:none}
+.rover-anatomy .iso-top{fill:var(--anatomy-top);stroke:none}
+.rover-anatomy .iso-shade{stroke:none}
+.rover-anatomy .iso-shade[data-shade="0"]{fill:var(--anatomy-shade-0)}
+.rover-anatomy .iso-shade[data-shade="1"]{fill:var(--anatomy-shade-1)}
+.rover-anatomy .iso-shade[data-shade="2"]{fill:var(--anatomy-shade-2)}
+.rover-anatomy .iso-shade[data-shade="3"]{fill:var(--anatomy-shade-3)}
+.rover-anatomy .iso-line{fill:none;stroke:var(--anatomy-lo);stroke-width:.65;stroke-linecap:round;stroke-linejoin:round}
+.rover-anatomy .iso-line[data-tone="hi"]{stroke:var(--anatomy-hi)}
+.rover-anatomy .iso-line[data-tone="mid"]{stroke:var(--anatomy-mid)}
+.rover-anatomy .iso-line[data-tone="faint"]{stroke:var(--anatomy-faint)}
+.rover-anatomy .iso-dots circle{fill:var(--anatomy-dot);stroke:none;opacity:.7}
+.rover-anatomy .ra-rubber{--anatomy-paper:#10171c;--anatomy-top:#243039;--anatomy-shade-0:#0b1116;--anatomy-shade-1:#10191f;--anatomy-shade-2:#17222a;--anatomy-shade-3:#1e2b33;--anatomy-lo:#53636e}
+.rover-anatomy .ra-battery{--anatomy-top:#53616b;--anatomy-shade-0:#26333e;--anatomy-shade-1:#303f49;--anatomy-shade-2:#3a4a55;--anatomy-shade-3:#475762}
+.rover-anatomy .ra-pcb{--anatomy-top:#304747;--anatomy-shade-0:#182a2d;--anatomy-shade-1:#1d3234;--anatomy-shade-2:#253d3e;--anatomy-shade-3:#2c4544}
+.rover-anatomy .ra-glass{--anatomy-top:#435761;--anatomy-shade-0:#112028;--anatomy-shade-1:#192c36;--anatomy-shade-2:#273e48;--anatomy-shade-3:#334b55}
+.rover-anatomy .ra-frame{--anatomy-top:#5a6974;--anatomy-shade-0:#2d3c47;--anatomy-shade-1:#354651;--anatomy-shade-2:#40525d;--anatomy-shade-3:#4c5e69}
+.rover-anatomy [data-component]:not([data-component=""]){cursor:pointer}
+.rover-anatomy [data-status="nominal"]{--ra-status:#7ba99e}
+.rover-anatomy [data-status="warning"]{--ra-status:#dab473}
+.rover-anatomy [data-status="fault"]{--ra-status:#e78d86}
+.rover-anatomy [data-status="offline"],.rover-anatomy [data-status="unknown"],.rover-anatomy [data-status="stale"]{--ra-status:#92a0aa}
+.rover-anatomy .ra-part[data-selected]>.iso-solid>.iso-edge{stroke:var(--ra-status);stroke-width:1.65}
+.rover-anatomy .ra-part[data-status="fault"]>.iso-solid>.iso-edge{stroke:#d8837c;stroke-width:1.1}
+.rover-anatomy .ra-part[data-status="warning"]>.iso-solid>.iso-edge{stroke:#bb9b68;stroke-width:1}
+.rover-anatomy [data-muted]{opacity:.22}
+.rover-anatomy [data-selected]{opacity:1}
+.rover-anatomy .ra-hotspot{outline:none}
+.rover-anatomy .ra-hotspot-target{fill:transparent;stroke:none}
+.rover-anatomy .ra-hotspot-ring{fill:#111c23;stroke:var(--ra-status);stroke-width:1.25}
+.rover-anatomy .ra-status-symbol{fill:var(--ra-status);font:600 12px ui-monospace,SFMono-Regular,Consolas,monospace;pointer-events:none}
+.rover-anatomy .ra-hotspot[data-selected] .ra-hotspot-ring{stroke-width:2.2}
+.rover-anatomy .ra-hotspot:focus-visible .ra-hotspot-target{stroke:#e8edf0;stroke-width:1.4;stroke-dasharray:2 2}
+.rover-anatomy .ra-hotspot:hover .ra-hotspot-ring{stroke:#f0f4f6;stroke-width:2}
+@media(max-width:600px){.rover-anatomy .ra-hotspot-target{r:23}.rover-anatomy .ra-hotspot-ring{r:10.5}.rover-anatomy .ra-status-symbol{font-size:14px}}
+@media(prefers-reduced-motion:reduce){.rover-anatomy *{animation:none!important;transition:none!important}}

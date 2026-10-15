@@ -19,16 +19,19 @@ import uuid
 
 from .link import FaultLink
 from .protocol import encode_message, decode_message
+from .health import HealthMonitor, catalog as health_catalog
+from .build_info import get_build_info
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_ACTIONS = {'STOP', 'CLAIM_CONTROL', 'MANUAL', 'SET_MISSION',
                   'START_ROUTE', 'RECOVER_ROUTE', 'DRONE_TAKEOFF',
-                  'DRONE_SURVEY', 'DRONE_LAND', 'ACTIVATE_PACKAGE'}
+                  'DRONE_SURVEY', 'DRONE_LAND', 'ACTIVATE_PACKAGE', 'SIM_HEALTH_FAULT'}
 
 
 class C2:
     def __init__(self, key, udp_port=12050, rover_port=12051, drone_port=12052):
         self.key = key
+        self.build_info = get_build_info()
         self.session = uuid.uuid4().hex
         self.csrf = secrets.token_urlsafe(32)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -45,6 +48,7 @@ class C2:
         self.transfers = deque(maxlen=8)
         self.link = FaultLink()
         self.invalid = 0
+        self.health_monitor = HealthMonitor()
         self.last_drone_forward = 0.0
         self.last_rover_forward = 0.0
         self.running = True
@@ -123,6 +127,8 @@ class C2:
             if body['seq'] <= v['seq']:
                 return
             v.update(seq=body['seq'], window=body['window'], state=body['state'], received=now)
+            if vehicle == 'rover':
+                self.health_monitor.observe(body['boot_id'], body['state'].get('health'), now)
             if not v['synced'] and not any(p['record']['vehicle'] == vehicle and p['body']['action'] == 'SYNC' for p in self.pending.values()):
                 try:
                     self.command(vehicle, 'SYNC', internal=True)
@@ -145,6 +151,13 @@ class C2:
             rec.update(status=status, reason=str(body.get('reason', ''))[:300])
             if isinstance(body.get('state'), dict):
                 rec['ack_state'] = body['state']
+                # Manual pulses need the token issued for this exact claim,
+                # not an earlier lease still visible in delayed telemetry.
+                # This projection does not renew its receiver-local expiry.
+                lease = body['state'].get('lease_id')
+                if (rec['action'] == 'CLAIM_CONTROL' and status == 'completed'
+                        and isinstance(lease, str) and re.fullmatch(r'[0-9a-f]{24}', lease)):
+                    rec['result'] = {'lease_id': lease}
             if status == 'accepted' and p:
                 # Accepted is not completed: no inference from telemetry or elapsed time.
                 p['deadline'] = min(p.get('completion_limit', now + 120), now + 120)
@@ -287,10 +300,13 @@ class C2:
 
     def snapshot(self):
         now = time.monotonic()
-        return {'simulation': True, 'session': self.session, 'csrf_token': self.csrf,
+        health, health_monitor = self.health_monitor.snapshot(now)
+        return {'simulation': True, 'build': self.build_info, 'session': self.session, 'csrf_token': self.csrf,
                 'vehicles': {name: {'connected': self.connected(name, now),
                              'age_s': round(now - v['received'], 3) if v['received'] else None,
-                             'boot_id': v['boot_id'], 'synced': v['synced'], 'state': v['state']} for name, v in self.vehicles.items()},
+                             'boot_id': v['boot_id'], 'synced': v['synced'],
+                             'state': v['state'] | ({'health': health} if name == 'rover' else {})} for name, v in self.vehicles.items()},
+                'health_monitor': health_monitor,
                 'commands': [{k: v for k, v in r.items() if k not in ('internal', 'ack_state')} for r in self.commands],
                 'events': list(self.events), 'transfers': [{k: v for k, v in t.items() if not k.startswith('_')} for t in self.transfers],
                 'faults': self.link.config.copy(), 'metrics': self.link.snapshot() | {'invalid_packets': self.invalid, 'pending_commands': len(self.pending)}}
@@ -371,8 +387,14 @@ def make_handler(c2, port):
                 with c2.lock:
                     result = c2.snapshot()
                 return self.respond(200, result)
+            if self.path == '/api/health/catalog':
+                return self.respond(200, health_catalog())
             assets = {'/': ('index.html', 'text/html; charset=utf-8'), '/app.js': ('app.js', 'text/javascript; charset=utf-8'),
                       '/geoview.js': ('geoview.js', 'text/javascript; charset=utf-8'),
+                      '/health.js': ('health.js', 'text/javascript; charset=utf-8'),
+                      '/health.css': ('health.css', 'text/css; charset=utf-8'),
+                      '/rover-anatomy.js': ('rover-anatomy.js', 'text/javascript; charset=utf-8'),
+                      '/rover-anatomy.css': ('rover-anatomy.css', 'text/css; charset=utf-8'),
                       '/styles.css': ('styles.css', 'text/css; charset=utf-8')}
             if self.path in assets:
                 name, mime = assets[self.path]
@@ -416,6 +438,10 @@ def make_handler(c2, port):
                         c2.link.configure(data)
                         result = c2.link.config.copy()
                         c2.event('warning', 'Simulation network fault profile changed')
+                    elif self.path == '/api/health/ack':
+                        if set(data) != {'alarm_id'}:
+                            raise ValueError('Expected alarm_id only')
+                        result = c2.health_monitor.acknowledge(data['alarm_id'])
                     else:
                         return self.respond(404, {'error': 'Not found'})
                 self.respond(202, result)
