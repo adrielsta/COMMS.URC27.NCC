@@ -486,6 +486,67 @@
     });
   }
 
+  const workspaces = {
+    overview: { title: "Field overview", description: "Vehicle state, field position and rover controls." },
+    drone: { title: "Drone operations", description: "Position, camera connection and survey controls." },
+    routes: { title: "Route planning", description: "Review, transfer and activate a route before departure." },
+    network: { title: "Network diagnostics", description: "Test the simulated link and inspect reported events." },
+  };
+  const workspaceTabs = [...document.querySelectorAll("[data-nav-view]")];
+
+  function selectWorkspace(name, { history = false, focus = false } = {}) {
+    const view = Object.hasOwn(workspaces, name) ? name : "overview";
+    const focusedPanel = document.activeElement?.closest("[data-workspace-view]");
+    document.querySelectorAll("[data-workspace-view]").forEach((panel) => {
+      panel.hidden = panel.dataset.workspaceView !== view;
+    });
+    workspaceTabs.forEach((tab) => {
+      const selected = tab.dataset.navView === view;
+      tab.setAttribute("aria-selected", String(selected));
+      tab.tabIndex = selected ? 0 : -1;
+    });
+    text("workspace-title", workspaces[view].title);
+    text("workspace-description", workspaces[view].description);
+    document.title = `${workspaces[view].title} · NCC rover operations`;
+    if (history && window.location.hash !== `#${view}`) {
+      window.history.pushState(null, "", `#${view}`);
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+    if (focus || (focusedPanel && focusedPanel.hidden)) $("workspace-title").focus({ preventScroll: true });
+    // A previously hidden SVG needs its visible dimensions before projection.
+    requestAnimationFrame(() => { fieldMap.render(); droneMap.render(); });
+  }
+
+  workspaceTabs.forEach((tab, index) => {
+    tab.addEventListener("click", () => selectWorkspace(tab.dataset.navView, { history: true }));
+    tab.addEventListener("keydown", (event) => {
+      let target;
+      if (["ArrowRight", "ArrowDown"].includes(event.key)) target = (index + 1) % workspaceTabs.length;
+      else if (["ArrowLeft", "ArrowUp"].includes(event.key)) target = (index - 1 + workspaceTabs.length) % workspaceTabs.length;
+      else if (event.key === "Home") target = 0;
+      else if (event.key === "End") target = workspaceTabs.length - 1;
+      else return;
+      event.preventDefault();
+      workspaceTabs[target].focus();
+      selectWorkspace(workspaceTabs[target].dataset.navView, { history: true });
+    });
+  });
+  document.querySelectorAll("[data-open-view]").forEach((button) => {
+    button.addEventListener("click", () => selectWorkspace(button.dataset.openView, { history: true, focus: true }));
+  });
+  document.querySelector(".skip-link").addEventListener("click", (event) => {
+    event.preventDefault();
+    $("main").tabIndex = -1;
+    $("main").focus();
+  });
+  window.addEventListener("popstate", () => selectWorkspace(window.location.hash.slice(1)));
+  window.addEventListener("hashchange", () => selectWorkspace(window.location.hash.slice(1)));
+  const mobileNavigation = window.matchMedia("(max-width: 800px)");
+  const setNavigationOrientation = () => $("workspace-nav").setAttribute("aria-orientation", mobileNavigation.matches ? "horizontal" : "vertical");
+  mobileNavigation.addEventListener("change", setNavigationOrientation);
+  setNavigationOrientation();
+  selectWorkspace(window.location.hash.slice(1));
+
   async function poll() {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 3000);

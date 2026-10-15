@@ -56,6 +56,28 @@ Desktop/laptop/tablet/phone layouts were inspected at widths 1440, 1024, 768, 39
 
 The historical satellite update was checked at desktop (1440), laptop (1024), and phone (390) widths with no horizontal overflow, external runtime requests or JavaScript errors. All nine tiles appeared in both map views. Checks covered pan/zoom/reset, keyboard navigation and tabs, disconnected camera messaging, stale/outside-coverage positions, and missing imagery while telemetry remains usable. Imagery is nominal 10 m sampling from 2016; zooming does not create additional detail.
 
+## Interface redesign verification — October 15, 2026
+
+The updated interface passed all 68 Python tests and five JavaScript geometry
+tests in the cloud workspace. The optional browser check is reproducible with
+`python3 scripts/check_ui.py --screenshots /tmp/ncc-ui` when Python Playwright and
+Chromium are installed. It starts a separate supervisor and temporary runtime,
+then stops its own processes on completion or failure.
+
+The browser check passed all four workspaces at 1440, 1024, 768, 390 and 320 px
+without horizontal overflow. It exercised keyboard tabs, browser history,
+workspace restoration after reload, the skip link, hidden-control focus behavior,
+all nine local imagery tiles in each map, pan/zoom/reset, and disconnected camera
+messaging. The real simulated workflow covered manual pulse expiry, software
+STOP, drone survey, review, transfer, separate activation, and a 40-waypoint route.
+Autonomous and stale package locks remained effective through an injected link
+outage and reconnection. Missing imagery and HTTP failure states were also
+checked. No JavaScript errors or external runtime requests occurred.
+
+This revision was verified locally. Upload to the newly requested shared GitHub
+repository remains blocked by its access permissions; no remote CI result is
+claimed for this local redesign.
+
 ## External verification and remaining limits
 
 - GitHub API confirmed authenticated account `adrielsta`, target repository `adrielsta/COMMS.URC27.NCC`, and push permission. Commit identity was explicitly confirmed by the owner.

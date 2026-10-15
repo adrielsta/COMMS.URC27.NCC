@@ -22,6 +22,8 @@ The governing source is the supplied *University Rover Challenge 2027 — Requir
 
 `Ctrl-C` stops the supervisor and all three children. Runtime logs and the PID list are in ignored `.runtime/`. The supervisor restarts failed children with fresh process sessions and stops after repeated startup failures. Motion never resumes automatically after a vehicle or C2 process restart.
 
+For the optional browser regression check, use an environment with Python Playwright and Chromium installed, then run `python3 scripts/check_ui.py --screenshots /tmp/ncc-ui`. It starts isolated simulators on free ports, exercises navigation and vehicle workflows, and saves screenshots. These browser tools are not required by the dashboard or `verify.sh`.
+
 The container image is pinned by version and verified digest. Local Docker validation is recorded in [test results](docs/test-results.md); current remote checks are shown on the pull request. No hosted Codespace has been validated.
 
 **Using Windows PowerShell:** run these commands in the Codespace's Bash terminal, from the repository folder. They are Linux shell scripts. For a local Windows checkout, open WSL2 with `wsl` from PowerShell, change to your checkout folder, install the prerequisites below, and run `./scripts/start.sh` there.
@@ -35,6 +37,8 @@ An already built devcontainer image can also be used offline. The original image
 Field operation must be off-grid: no cloud or satellite internet may be required (rules §2.a.i and §2.c.i). This implementation supplies the offline development path and portable application protocol. Physical vehicle deployment requires the adapters and authenticated radio transport described in [hardware gaps](docs/hardware-gaps.md); the current simulator command sockets deliberately accept only localhost traffic.
 
 ## Satellite field view and drone view
+
+The dashboard has four workspaces: **Overview** for the field map, vehicle state and rover controls; **Drone** for position, camera status and survey controls; **Routes** for package review and execution; and **Network** for fault injection and diagnostics. Software STOP and command outcomes remain available across workspaces. Navigation supports arrow keys, Home/End and browser Back/Forward. See the [interface design notes](docs/ui-design.md) for the Taste and 21st.dev references.
 
 The field map uses real **2016 Sentinel-2 imagery around MDRS, Utah**, stored locally with its attribution and license. Rover/drone markers and reviewed routes use their WGS 84 coordinates on a Web Mercator map. Drag or use arrow keys to pan, use the zoom buttons, and select **Reset view** to return. Positions outside the stored area are identified; stale positions remain visibly marked.
 
@@ -54,12 +58,12 @@ It sends software STOP, verifies the rover's acknowledgement, and returns nonzer
 
 For the synthetic survey-to-route workflow in the dashboard:
 
-1. Leave both vehicles in **Delivery**, or select **Astronaut assistance**. Take off the simulated drone and generate a synthetic survey.
-2. Load the survey into the review panel. Inspect its WGS 84 coordinates, version and synthetic label. Transfer it to the rover. **Accepted** means schema and SHA-256 validated; it does not activate the route.
-3. Explicitly activate the accepted package while stopped. Land the simulated drone at its designated pad.
-4. Set both vehicles to **Route finding**. The drone flight lock and fresh landing report must reach the rover before departure.
-5. Start the route. The rover executes the supplied synthetic waypoints onboard. **Accepted** and **Completed** are separate acknowledgements.
-6. Try fault profiles while watching freshness, command results, and diagnostics. A disconnected autonomous route can continue onboard; manual pulses always expire locally. After a restart, use explicit new commands.
+1. In **Overview**, leave both vehicles in **Delivery**, or select **Astronaut assistance**. Open **Drone**, take off the simulated drone and generate a synthetic survey.
+2. Open **Routes** and load the survey into the review panel. Inspect its WGS 84 coordinates, version and synthetic label. Transfer it to the rover. **Accepted** means schema and SHA-256 validated; it does not activate the route.
+3. Explicitly activate the accepted package while stopped. Return to **Drone** and land at the designated pad.
+4. In **Overview**, set both vehicles to **Route finding**. The drone flight lock and fresh landing report must reach the rover before departure.
+5. In **Routes**, start the route. The rover executes the supplied synthetic waypoints onboard. **Accepted** and **Completed** are separate acknowledgements.
+6. Try fault profiles in **Network** while watching freshness, command results, and diagnostics. A disconnected autonomous route can continue onboard; manual pulses always expire locally. After a restart, use explicit new commands.
 
 The verifier runs this workflow across actual subprocesses, including lost completion ACK recovery, corrupted transfers, and STOP during a bulk transfer. It also tests interrupted chunk delivery/resume and SHA-256 rejection directly at the receiver. Re-submit the same reviewed package after a failed transfer to resume missing chunks; a receiver process restart clears volatile uploads and requires retransfer/review/activation. No map package is executable code.
 
