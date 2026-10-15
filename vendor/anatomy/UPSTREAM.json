@@ -1,0 +1,12 @@
+{
+  "repository": "https://github.com/wheresryan22/anatomy",
+  "revision": "e9488296a44211c42701ff71705b7901470ec78f",
+  "license": "MIT",
+  "files": {
+    "kit/iso-kit.mjs": "6d3ecc725d30c3b0346da309cf61dfa5a65017c23620bbd4093009d4fb104018",
+    "kit/lathe.mjs": "a4e7e974b1a37e603ad2b76363b6f9815cc101dfff0ad277a5d4e8f1dc56fccb",
+    "kit/tube.mjs": "bcb3cc360f6d83e6a5753f4c464b4587ab7965028b05a5d58e285abce58667c9",
+    "kit/audit.mjs": "74e605b5d549c1f31c8a1104db7560057105cf86809bf6ced00e4ac79194c8e2",
+    "LICENSE": "87c078ab9d90a3044f359e6b563d4e6afea7aa060897cf4f21618687b3856796"
+  }
+}
